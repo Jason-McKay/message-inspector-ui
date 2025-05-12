@@ -1,0 +1,50 @@
+<div class="container mt-4">
+  <h2>Message Inspector</h2>
+
+  <button class="btn btn-primary" (click)="viewQueues()">
+    View Queues
+  </button>
+
+  <div class="input-group mb-4 mt-3">
+    <input
+      type="text"
+      class="form-control"
+      placeholder="Enter queue name"
+      [(ngModel)]="queueName"
+    />
+    <button class="btn btn-primary" (click)="fetchMessages()" [disabled]="!queueName">
+      Load Messages
+    </button>
+  </div>
+
+  <div *ngIf="hasFetched && messages.length === 0" class="alert alert-info">
+    No messages found in <strong>{{ queueName }}</strong>.
+  </div>
+
+  <table *ngIf="messages.length > 0" class="table table-striped table-bordered">
+    <thead>
+    <tr>
+      <th>Message ID</th>
+      <th>Timestamp</th>
+      <th>Action</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr *ngFor="let msg of messages">
+      <td>{{ msg.messageId }}</td>
+      <td>{{ msg.timestamp | date: 'short' }}</td>
+      <td>
+        <button class="btn btn-sm btn-outline-primary me-1" (click)="viewMessage(msg.messageId)">
+          View
+        </button>
+        <button class="btn btn-sm btn-outline-danger me-1" (click)="deleteMessage(msg.messageId)">
+          Delete
+        </button>
+        <button class="btn btn-sm btn-outline-warning" (click)="moveToDLQ(msg.messageId)">
+          Move to DLQ
+        </button>
+      </td>
+    </tr>
+    </tbody>
+  </table>
+</div>

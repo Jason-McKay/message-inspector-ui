@@ -1,0 +1,9 @@
+<div class="modal-backdrop" *ngIf="visible">
+  <div class="modal-content">
+    <p>{{ actionLabel }}</p>
+    <div class="actions">
+      <button class="btn btn-danger" (click)="confirm.emit()">Yes</button>
+      <button class="btn btn-secondary" (click)="cancel.emit()">Cancel</button>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,70 @@
+<div *ngIf="loading">Loading queues...</div>
+<div *ngIf="error">{{ error }}</div>
+
+<table *ngIf="!loading && queuesArtemis.length">
+  <thead>
+  <tr>
+    <th colspan="3">Artemis Queues</th>
+  </tr>
+  <tr>
+    <th>Queue ID</th>
+    <th>Queue Name</th>
+    <th>Message Count</th>
+  </tr>
+  </thead>
+  <tbody>
+  <tr *ngFor="let queue of queuesArtemis">
+    <td>{{ queue.queueId }}</td>
+    <td>{{ queue.queueName }}</td>
+    <td>{{ queue.messageCount }}</td>
+  </tr>
+  </tbody>
+</table>
+
+
+<div *ngIf="loading2">Loading queues...</div>
+<div *ngIf="error2">{{ error2 }}</div>
+
+<table *ngIf="!loading2 && queuesJolokia.length">
+  <thead>
+  <tr>
+    <th colspan="3">Jolokia Queues</th>
+  </tr>
+  <tr>
+    <th>Queue ID</th>
+    <th>Queue Name</th>
+    <th>Message Count</th>
+  </tr>
+  </thead>
+  <tbody>
+  <tr *ngFor="let queue of queuesJolokia">
+    <td>{{ queue.queueId }}</td>
+    <td>{{ queue.queueName }}</td>
+    <td>{{ queue.messageCount }}</td>
+  </tr>
+  </tbody>
+</table>
+
+
+<div *ngIf="loading3">Loading queues...</div>
+<div *ngIf="error3">{{ error3 }}</div>
+
+<table *ngIf="!loading3 && queueNamesJolokia.length">
+  <thead>
+  <tr>
+    <th colspan="3">Jolokia Queues</th>
+  </tr>
+  <tr>
+    <th>Queue Name</th>
+    <th></th>
+    <th></th>
+  </tr>
+  </thead>
+  <tbody>
+  <tr *ngFor="let queue of queueNamesJolokia">
+    <td>{{ queue }}</td>
+    <td></td>
+    <td></td>
+  </tr>
+  </tbody>
+</table>

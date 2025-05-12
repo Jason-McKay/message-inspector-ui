@@ -1,0 +1,51 @@
+<div class="container mt-4" *ngIf="message">
+  <h3>Message Detail</h3>
+  <p><strong>Message ID:</strong> {{ message.messageId }}</p>
+  <p><strong>Timestamp:</strong> {{ message.timestamp | date: 'medium' }}</p>
+  <p><strong>Properties:</strong></p>
+  <pre>{{ message.properties | json }}</pre>
+
+  <p><strong>Payload:</strong></p>
+  <pre *ngIf="message.payload">{{ message.payload | json }}</pre>
+
+  <div class="mt-4 d-flex gap-2">
+    <button
+      class="btn btn-success"
+      [disabled]="loading.resend"
+      (click)="onResend()"
+    >
+      <span *ngIf="loading.resend" class="spinner-border spinner-border-sm me-2"></span>
+      Resend
+    </button>
+
+    <button
+      class="btn btn-danger"
+      [disabled]="loading.delete"
+      (click)="onDeleteConfirmed()"
+    >
+      <span *ngIf="loading.delete" class="spinner-border spinner-border-sm me-2"></span>
+      Delete
+    </button>
+
+    <button
+      class="btn btn-warning"
+      [disabled]="loading.dlq"
+      (click)="onDLQConfirmed()"
+    >
+      <span *ngIf="loading.dlq" class="spinner-border spinner-border-sm me-2"></span>
+      Move to DLQ
+    </button>
+
+    <button class="btn btn-secondary ms-auto" (click)="goBack()">
+      ← Back to List
+    </button>
+  </div>
+</div>
+
+<!-- Confirmation Modal -->
+<app-confirmation-modal
+  [visible]="confirm.visible"
+  [actionLabel]="confirm.action"
+  (confirm)="confirm.handler?.()"
+  (cancel)="confirm.visible = false">
+</app-confirmation-modal>

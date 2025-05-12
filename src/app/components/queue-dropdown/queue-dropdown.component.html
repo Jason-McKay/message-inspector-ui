@@ -1,0 +1,18 @@
+<div class="container mt-3">
+  <div class="row">
+    <div class="col-md-6">
+      <div class="mb-3">
+        <label for="queueSelect" class="form-label">Select a queue:</label>
+        <select
+          id="queueSelect"
+          class="form-select"
+          [(ngModel)]="selectedQueue"
+          (ngModelChange)="onQueueSelect($event)">
+          <option *ngFor="let queue of queues" [value]="queue">
+            {{ queue }}
+          </option>
+        </select>
+      </div>
+    </div>
+  </div>
+</div>
