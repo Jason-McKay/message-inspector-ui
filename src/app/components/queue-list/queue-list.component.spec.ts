@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { HttpClientTestingModule } from '@angular/common/http/testing';
 
 import { QueueListComponent } from './queue-list.component';
 
@@ -8,6 +9,7 @@ describe('QueueListComponent', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
+      imports: [HttpClientTestingModule],
       declarations: [QueueListComponent]
     });
     fixture = TestBed.createComponent(QueueListComponent);

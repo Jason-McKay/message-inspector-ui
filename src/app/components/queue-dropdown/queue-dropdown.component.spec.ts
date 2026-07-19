@@ -1,4 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { HttpClientTestingModule } from '@angular/common/http/testing';
+import { FormsModule } from '@angular/forms';
 
 import { QueueDropdownComponent } from './queue-dropdown.component';
 
@@ -8,6 +10,7 @@ describe('QueueDropdownComponent', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
+      imports: [HttpClientTestingModule, FormsModule],
       declarations: [QueueDropdownComponent]
     });
     fixture = TestBed.createComponent(QueueDropdownComponent);

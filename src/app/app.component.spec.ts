@@ -20,10 +20,10 @@ describe('AppComponent', () => {
     expect(app.title).toEqual('message-inspector-ui');
   });
 
-  it('should render title', () => {
+  it('should render the navbar brand', () => {
     const fixture = TestBed.createComponent(AppComponent);
     fixture.detectChanges();
     const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.querySelector('.content span')?.textContent).toContain('message-inspector-ui app is running!');
+    expect(compiled.querySelector('.navbar-brand')?.textContent).toContain('JMS Message Inspector');
   });
 });
