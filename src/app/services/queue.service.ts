@@ -41,13 +41,21 @@ export class QueueService {
     return this.http.get<JolokiaResponse<string[]>>(`${this.baseUrl}/artemis-jolokia/names`);
   }
 
+  /**
+   * Returns the stored queue name, or an empty body when the user has no preference
+   * yet — absence is a 200, not a 404.
+   */
   getLastUsedQueue(userId: string): Observable<string> {
-    return this.http.get(`/last-used/${userId}`, { responseType: 'text' });
+    return this.http.get(this.lastUsedUrl(userId), { responseType: 'text' });
   }
 
   saveLastUsedQueue(userId: string, queueName: string): Observable<void> {
-    return this.http.post<void>(`/last-used/${userId}`, queueName, {
+    return this.http.post<void>(this.lastUsedUrl(userId), queueName, {
       headers: { 'Content-Type': 'text/plain' },
     });
+  }
+
+  private lastUsedUrl(userId: string): string {
+    return `${this.baseUrl}/last-used/${encodeURIComponent(userId)}`;
   }
 }

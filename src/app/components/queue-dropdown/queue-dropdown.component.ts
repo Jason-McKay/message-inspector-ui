@@ -41,14 +41,17 @@ export class QueueDropdownComponent implements OnInit {
 
   private restoreLastUsedQueue() {
     this.queueService.getLastUsedQueue(this.userId).subscribe({
+      // No preference yet arrives as an empty 200, not an error, so the empty case is
+      // handled here and silently — it is the normal first run.
       next: (queueName) => {
         if (queueName && this.queues.includes(queueName)) {
           this.selectedQueue = queueName;
           this.selectionService.setSelectedQueue(queueName);
         }
       },
-      // No preference stored yet is the normal first-run case, so this stays quiet.
-      error: () => {}
+      // Reaching here means the lookup itself failed. Not worth blocking on, but it is
+      // a real fault and must not pass unmentioned.
+      error: () => this.toast.warning('Could not restore your last-used queue')
     });
   }
 }

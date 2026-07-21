@@ -93,17 +93,32 @@ describe('QueueDropdownComponent', () => {
       expect(selection.getSelectedQueue()).toBeNull();
     });
 
-    // No stored preference is the normal first-run case and must not raise a toast.
-    it('stays quiet when no preference can be read', () => {
-      queueService.getLastUsedQueue.and.returnValue(
-        throwError(() => new HttpErrorResponse({ status: 404 }))
-      );
+    // A user with no stored preference gets 200 with an empty body, not a 404
+    // (QueueControllerTest.testGetLastUsedQueue_NoPreferenceReturnsOkWithEmptyBody).
+    // This is the normal first run and must not raise anything.
+    it('stays quiet on the empty body that means "no preference yet"', () => {
+      queueService.getLastUsedQueue.and.returnValue(of(''));
 
       fixture.detectChanges();
 
       expect(component.selectedQueue).toBeNull();
+      expect(toast.warning).not.toHaveBeenCalled();
       expect(toast.error).not.toHaveBeenCalled();
       expect(toast.apiError).not.toHaveBeenCalled();
+    });
+
+    // Since absence is not an error, an error here is a genuine fault (Redis down,
+    // say) and should be surfaced rather than swallowed.
+    it('warns when the lookup itself fails, without blocking the dropdown', () => {
+      queueService.getLastUsedQueue.and.returnValue(
+        throwError(() => new HttpErrorResponse({ status: 500 }))
+      );
+
+      fixture.detectChanges();
+
+      expect(toast.warning).toHaveBeenCalled();
+      expect(component.queues).toEqual(QUEUES);
+      expect(component.selectedQueue).toBeNull();
     });
   });
 

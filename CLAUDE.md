@@ -70,13 +70,14 @@ SCSS per-component. TypeScript is in `strict` mode with `strictTemplates`.
 
 ## Gotchas
 
-- **`QueueService.getLastUsedQueue` / `saveLastUsedQueue` hit relative paths** (`/last-used/{userId}`),
-  unlike every other call which is absolute to `:8080`. With no `proxy.conf.json` in the repo these
-  resolve against `localhost:4200` and will 404 in dev. If you touch queue persistence, this is
-  likely the bug. **Note the restore path in `QueueDropdownComponent` deliberately swallows this
-  error** — a first run with no stored preference is legitimate and must not raise a toast — so the
-  broken URL fails invisibly and a spec pins that silence. Fix the URL and the silence stops being
-  a problem; do not "fix" it by making the restore path noisy.
+- **Every service URL must be absolute to `:8080`.** There is no `proxy.conf.json`, so a relative
+  URL resolves against the dev server on `:4200` and silently does the wrong thing. This is not
+  hypothetical: `getLastUsedQueue`/`saveLastUsedQueue` were relative from Phase 1 until
+  2026-07-21, so the last-used-queue preference never once worked through the UI. `queue.service.spec.ts`
+  now pins the URLs.
+- **No stored preference is an empty 200, not a 404** (see
+  `QueueControllerTest.testGetLastUsedQueue_NoPreferenceReturnsOkWithEmptyBody`). Handle absence in
+  the success path; an error from that endpoint is a genuine fault and gets a warning toast.
 - `QueueDropdownComponent` hardcodes `userId = 'jason'` (Phase 4 replaces this with the
   authenticated user).
 - **`message-list.html` fires Delete and Move to DLQ with no confirmation.** The modal is wired up
