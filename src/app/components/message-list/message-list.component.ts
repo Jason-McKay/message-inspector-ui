@@ -1,6 +1,6 @@
 import {Component, OnInit} from '@angular/core';
 import { MessageService } from 'src/app/services/message.service';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import {ToastService} from "../../services/toast.service";
 import {QueueSelectionService} from "../../services/queue-selection.service";
 
@@ -16,7 +16,7 @@ export class MessageListComponent implements OnInit{
   hasFetched: boolean = false;
   isLoading: boolean = false;
 
-  constructor(private selectionService: QueueSelectionService, private messageService: MessageService, private router: Router, private toast: ToastService) {}
+  constructor(private selectionService: QueueSelectionService, private messageService: MessageService, private route: ActivatedRoute, private router: Router, private toast: ToastService) {}
 
   ngOnInit(): void {
     this.selectionService.selectedQueue$.subscribe((queue) => {
@@ -26,6 +26,14 @@ export class MessageListComponent implements OnInit{
         this.fetchMessages();
       }
     });
+
+    // Deep link: /messages/:queueName pre-loads that queue. This is the path taken when
+    // returning here from the detail view.
+    const routeQueue = this.route.snapshot.paramMap.get('queueName');
+    if (routeQueue) {
+      this.queueName = routeQueue;
+      this.fetchMessages();
+    }
   }
 
   fetchMessages() {
@@ -46,8 +54,10 @@ export class MessageListComponent implements OnInit{
   }
 
   viewMessage(id: string) {
-    const encodedId = encodeURIComponent(id);
-    this.router.navigate(['/messages', this.queueName, encodedId]);
+    // Pass the id raw: the Router encodes path segments itself. Pre-encoding here made
+    // the id arrive at MessageDetailComponent still encoded, which the service then
+    // encoded a second time -- Tomcat rejects the resulting %253A with a 400.
+    this.router.navigate(['/messages', this.queueName, id]);
   }
   viewQueues() {
     this.router.navigate(['/queues']);

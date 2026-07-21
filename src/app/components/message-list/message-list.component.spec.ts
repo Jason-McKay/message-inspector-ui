@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { of, throwError } from 'rxjs';
 
 import { MessageListComponent } from './message-list.component';
@@ -30,6 +30,7 @@ describe('MessageListComponent', () => {
   let toast: jasmine.SpyObj<ToastService>;
   let router: jasmine.SpyObj<Router>;
   let selection: QueueSelectionService;
+  let routeParams: Map<string, string>;
 
   beforeEach(() => {
     messageService = jasmine.createSpyObj<MessageService>('MessageService', [
@@ -41,6 +42,7 @@ describe('MessageListComponent', () => {
     router = jasmine.createSpyObj<Router>('Router', ['navigate']);
 
     messageService.getMessages.and.returnValue(of([]));
+    routeParams = new Map<string, string>();
 
     TestBed.configureTestingModule({
       imports: [FormsModule],
@@ -48,7 +50,8 @@ describe('MessageListComponent', () => {
       providers: [
         { provide: MessageService, useValue: messageService },
         { provide: ToastService, useValue: toast },
-        { provide: Router, useValue: router }
+        { provide: Router, useValue: router },
+        { provide: ActivatedRoute, useValue: { snapshot: { paramMap: routeParams } } }
       ]
     });
 
@@ -76,6 +79,19 @@ describe('MessageListComponent', () => {
       expect(component.messages.length).toBe(1);
       expect(component.hasFetched).toBeTrue();
       expect(component.isLoading).toBeFalse();
+    });
+
+    // /messages/:queueName is what MessageDetailComponent navigates back to after a
+    // delete or DLQ move, and what "Back to List" uses.
+    it('pre-loads the queue named in the route', () => {
+      routeParams.set('queueName', QUEUE);
+      messageService.getMessages.and.returnValue(of([message('a')]));
+
+      fixture.detectChanges();
+
+      expect(messageService.getMessages).toHaveBeenCalledWith(QUEUE);
+      expect(component.queueName).toBe(QUEUE);
+      expect(component.messages.length).toBe(1);
     });
 
     it('reports a failed fetch and stops loading', () => {
@@ -165,10 +181,14 @@ describe('MessageListComponent', () => {
       selection.setSelectedQueue(QUEUE);
     });
 
-    it('encodes the message id when opening the detail view', () => {
+    // The id must reach the Router raw. The Router encodes the segment, ActivatedRoute
+    // decodes it, and MessageService encodes it once more for the HTTP call — one encode
+    // per boundary. Pre-encoding here produced %253A in the request URL, which Tomcat
+    // rejects with a 400 before Spring sees it.
+    it('passes the message id to the router unencoded', () => {
       component.viewMessage('ID:a b');
 
-      expect(router.navigate).toHaveBeenCalledWith(['/messages', QUEUE, 'ID%3Aa%20b']);
+      expect(router.navigate).toHaveBeenCalledWith(['/messages', QUEUE, 'ID:a b']);
     });
 
     it('navigates to the queue list', () => {
