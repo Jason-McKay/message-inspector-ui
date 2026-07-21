@@ -63,6 +63,37 @@ export class MessageListComponent implements OnInit{
     this.router.navigate(['/queues']);
   }
 
+  // Same confirmation shape as MessageDetailComponent. Both destructive actions are
+  // reachable from this table too, and were firing straight at the service from the
+  // template with nothing in between.
+  confirm = {
+    visible: false,
+    action: '',
+    handler: null as (() => void) | null
+  };
+
+  showDeleteConfirm(id: string) {
+    this.confirm = {
+      visible: true,
+      action: 'Delete this message?',
+      handler: () => {
+        this.confirm.visible = false;
+        this.deleteMessage(id);
+      }
+    };
+  }
+
+  showDLQConfirm(id: string) {
+    this.confirm = {
+      visible: true,
+      action: 'Move message to DLQ?',
+      handler: () => {
+        this.confirm.visible = false;
+        this.moveToDLQ(id);
+      }
+    };
+  }
+
   deleteMessage(id: string) {
     this.messageService.deleteMessage(this.queueName, id).subscribe({
       next: (res) => {

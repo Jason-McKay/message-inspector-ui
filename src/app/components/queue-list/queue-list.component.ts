@@ -1,5 +1,6 @@
 import {Component, OnInit} from '@angular/core';
-import {JmsQueueDto, JolokiaResponse, QueueService} from "../../services/queue.service";
+import {JmsQueueDto, QueueService} from "../../services/queue.service";
+import {ToastService} from "../../services/toast.service";
 
 @Component({
   selector: 'app-queue-list',
@@ -17,7 +18,7 @@ export class QueueListComponent implements OnInit {
   loading3 = false;
   error3 = '';
 
-  constructor(private queueService: QueueService) {}
+  constructor(private queueService: QueueService, private toast: ToastService) {}
 
   ngOnInit(): void {
     this.fetchQueues();
@@ -34,8 +35,7 @@ export class QueueListComponent implements OnInit {
         this.loading = false;
       },
       error: (err) => {
-        this.error = 'Failed to load Artemis queues\n';
-        console.error(err);
+        this.error = this.toast.describeApiError(err, 'Failed to load Artemis queues');
         this.loading = false;
       }
     });
@@ -46,20 +46,18 @@ export class QueueListComponent implements OnInit {
         this.loading2 = false;
       },
       error: (err) => {
-        this.error2 = 'Failed to load Jolokia queues\n';
-        console.error(err);
+        this.error2 = this.toast.describeApiError(err, 'Failed to load Jolokia queues');
         this.loading2 = false;
       }
     });
 
     this.queueService.fetchAllQueueNames().subscribe({
       next: (data) => {
-        this.queueNamesJolokia = data.value;
+        this.queueNamesJolokia = data.value ?? [];
         this.loading3 = false;
       },
       error: (err) => {
-        this.error3 = 'Failed to load Jolokia queues names\n';
-        console.error(err);
+        this.error3 = this.toast.describeApiError(err, 'Failed to load Jolokia queue names');
         this.loading3 = false;
       }
     });

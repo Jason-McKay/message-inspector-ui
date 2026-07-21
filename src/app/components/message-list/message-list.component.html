@@ -37,10 +37,10 @@
         <button class="btn btn-sm btn-outline-primary me-1" (click)="viewMessage(msg.messageId)">
           View
         </button>
-        <button class="btn btn-sm btn-outline-danger me-1" (click)="deleteMessage(msg.messageId)">
+        <button class="btn btn-sm btn-outline-danger me-1" (click)="showDeleteConfirm(msg.messageId)">
           Delete
         </button>
-        <button class="btn btn-sm btn-outline-warning" (click)="moveToDLQ(msg.messageId)">
+        <button class="btn btn-sm btn-outline-warning" (click)="showDLQConfirm(msg.messageId)">
           Move to DLQ
         </button>
       </td>
@@ -48,3 +48,11 @@
     </tbody>
   </table>
 </div>
+
+<!-- Confirmation Modal -->
+<app-confirmation-modal
+  [visible]="confirm.visible"
+  [actionLabel]="confirm.action"
+  (confirm)="confirm.handler?.()"
+  (cancel)="confirm.visible = false">
+</app-confirmation-modal>

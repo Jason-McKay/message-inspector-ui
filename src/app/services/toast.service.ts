@@ -13,10 +13,15 @@ export class ToastService {
    * own message; fall back to something status-appropriate when it is absent.
    */
   apiError(err: unknown, fallback: string) {
-    this.error(this.describe(err, fallback));
+    this.error(this.describeApiError(err, fallback));
   }
 
-  private describe(err: unknown, fallback: string): string {
+  /**
+   * The same mapping as {@link apiError}, but returned rather than shown. For views that
+   * render failures inline instead of as a toast — QueueListComponent fires three calls
+   * at once, and three simultaneous toasts would be worse than three inline messages.
+   */
+  describeApiError(err: unknown, fallback: string): string {
     if (!(err instanceof HttpErrorResponse)) {
       return fallback;
     }

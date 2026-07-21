@@ -5,6 +5,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { of, throwError } from 'rxjs';
 
 import { MessageListComponent } from './message-list.component';
+import { ConfirmationModalComponent } from '../confirmation-modal/confirmation-modal.component';
 import { MessageService } from '../../services/message.service';
 import { ToastService } from '../../services/toast.service';
 import { QueueSelectionService } from '../../services/queue-selection.service';
@@ -46,7 +47,7 @@ describe('MessageListComponent', () => {
 
     TestBed.configureTestingModule({
       imports: [FormsModule],
-      declarations: [MessageListComponent],
+      declarations: [MessageListComponent, ConfirmationModalComponent],
       providers: [
         { provide: MessageService, useValue: messageService },
         { provide: ToastService, useValue: toast },
@@ -115,6 +116,26 @@ describe('MessageListComponent', () => {
       selection.setSelectedQueue(QUEUE);
     });
 
+    // The table's Delete button previously called the service straight from the
+    // template, with no confirmation between the click and a destructive call.
+    it('asks for confirmation before deleting anything', () => {
+      component.showDeleteConfirm('a');
+
+      expect(component.confirm.visible).toBeTrue();
+      expect(messageService.deleteMessage).not.toHaveBeenCalled();
+    });
+
+    it('deletes the row the confirmation was opened for', () => {
+      messageService.deleteMessage.and.returnValue(of(ok));
+
+      component.showDeleteConfirm('a');
+      component.confirm.handler!();
+
+      expect(messageService.deleteMessage).toHaveBeenCalledWith(QUEUE, 'a');
+      expect(component.confirm.visible).toBeFalse();
+      expect(component.messages.map((m) => m.messageId)).toEqual(['b']);
+    });
+
     it('removes the row once the server confirms', () => {
       messageService.deleteMessage.and.returnValue(of(ok));
 
@@ -155,6 +176,23 @@ describe('MessageListComponent', () => {
       selection.setSelectedQueue(QUEUE);
     });
 
+    it('asks for confirmation before moving anything', () => {
+      component.showDLQConfirm('b');
+
+      expect(component.confirm.visible).toBeTrue();
+      expect(messageService.moveToDLQ).not.toHaveBeenCalled();
+    });
+
+    it('moves the row the confirmation was opened for', () => {
+      messageService.moveToDLQ.and.returnValue(of(ok));
+
+      component.showDLQConfirm('b');
+      component.confirm.handler!();
+
+      expect(messageService.moveToDLQ).toHaveBeenCalledWith(QUEUE, 'b');
+      expect(component.messages.map((m) => m.messageId)).toEqual(['a']);
+    });
+
     it('removes the row once the server confirms', () => {
       messageService.moveToDLQ.and.returnValue(of(ok));
 
@@ -172,6 +210,33 @@ describe('MessageListComponent', () => {
 
       expect(component.messages.map((m) => m.messageId)).toEqual(['a', 'b']);
       expect(toast.error).toHaveBeenCalledWith(failed.message);
+    });
+  });
+
+  describe('destructive buttons', () => {
+    // Guards the template, not just the methods. The spec above calls
+    // showDeleteConfirm() directly, so it would still pass if the button were rewired
+    // straight to deleteMessage() — which is exactly how this bug existed.
+    it('route delete and DLQ through the confirmation modal', () => {
+      messageService.getMessages.and.returnValue(of([message('a')]));
+      fixture.detectChanges();
+      selection.setSelectedQueue(QUEUE);
+      fixture.detectChanges();
+
+      const buttons: HTMLButtonElement[] =
+        Array.from(fixture.nativeElement.querySelectorAll('td button'));
+      const byText = (label: string) =>
+        buttons.find((b) => b.textContent?.trim() === label)!;
+
+      byText('Delete').click();
+      expect(component.confirm.visible).toBeTrue();
+      expect(messageService.deleteMessage).not.toHaveBeenCalled();
+
+      component.confirm.visible = false;
+
+      byText('Move to DLQ').click();
+      expect(component.confirm.visible).toBeTrue();
+      expect(messageService.moveToDLQ).not.toHaveBeenCalled();
     });
   });
 
