@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import {QueueService} from "../../services/queue.service";
 import {QueueSelectionService} from "../../services/queue-selection.service";
+import {ToastService} from "../../services/toast.service";
 
 
 @Component({
@@ -14,26 +15,40 @@ export class QueueDropdownComponent implements OnInit {
 
   constructor(
     private queueService: QueueService,
-    private selectionService: QueueSelectionService
+    private selectionService: QueueSelectionService,
+    private toast: ToastService
   ) {}
 
   ngOnInit(): void {
-    this.queueService.fetchAllQueueNames().subscribe((response) => {
-      this.queues = response.value;
-      // Fetch the last-used queue from Redis
-      this.queueService.getLastUsedQueue(this.userId).subscribe((queueName) => {
-        if (queueName && this.queues.includes(queueName)) {
-          this.selectedQueue = queueName;
-          this.selectionService.setSelectedQueue(queueName);
-        }
-      });
+    this.queueService.fetchAllQueueNames().subscribe({
+      next: (response) => {
+        this.queues = response.value ?? [];
+        this.restoreLastUsedQueue();
+      },
+      error: (err) => this.toast.apiError(err, 'Failed to load queues')
     });
   }
 
   onQueueSelect(queue: string) {
     this.selectedQueue = queue;
     this.selectionService.setSelectedQueue(queue);
-    this.queueService.saveLastUsedQueue(this.userId, queue).subscribe();
-    //localStorage.setItem('lastUsedQueue', queue);
+    // Best-effort: losing the preference is not worth interrupting the user over,
+    // but it should not fail silently either.
+    this.queueService.saveLastUsedQueue(this.userId, queue).subscribe({
+      error: () => this.toast.warning('Could not save your queue preference')
+    });
+  }
+
+  private restoreLastUsedQueue() {
+    this.queueService.getLastUsedQueue(this.userId).subscribe({
+      next: (queueName) => {
+        if (queueName && this.queues.includes(queueName)) {
+          this.selectedQueue = queueName;
+          this.selectionService.setSelectedQueue(queueName);
+        }
+      },
+      // No preference stored yet is the normal first-run case, so this stays quiet.
+      error: () => {}
+    });
   }
 }

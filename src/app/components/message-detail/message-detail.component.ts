@@ -25,15 +25,17 @@ export class MessageDetailComponent implements OnInit {
     this.queueName = this.route.snapshot.paramMap.get('queueName')!;
     const messageId = this.route.snapshot.paramMap.get('messageId')!;
     this.messageService.getMessage(this.queueName, messageId).subscribe({
-      next: (msg) => (this.message = msg),
-      error: (err) => {
-        if (err.status === 404) {
+      next: (msg) => {
+        // A message that is not on the queue comes back as 200 with an empty body,
+        // not 404, so absence has to be detected here rather than in the error branch.
+        if (!msg || !msg.messageId) {
           this.toast.error('Message not found');
           this.router.navigate(['/messages', this.queueName]);
-        } else {
-          this.toast.error('Failed to fetch message');
+          return;
         }
-      }
+        this.message = msg;
+      },
+      error: (err) => this.toast.apiError(err, 'Failed to fetch message')
     });
   }
 
@@ -41,13 +43,17 @@ export class MessageDetailComponent implements OnInit {
     if (!this.message) return;
     this.loading.resend = true;
     this.messageService.resendMessage(this.queueName, this.message.messageId).subscribe({
-      next: () => {
+      next: (res) => {
+        this.loading.resend = false;
+        if (!res.success) {
+          this.toast.error(res.message || 'Failed to resend');
+          return;
+        }
         this.toast.success('Message resent');
-        this.loading.resend = false;
       },
-      error: () => {
-        this.toast.error('Failed to resend');
+      error: (err) => {
         this.loading.resend = false;
+        this.toast.apiError(err, 'Failed to resend');
       }
     });
   }
@@ -84,13 +90,18 @@ export class MessageDetailComponent implements OnInit {
     if (!this.message) return;
     this.loading.delete = true;
     this.messageService.deleteMessage(this.queueName, this.message.messageId).subscribe({
-      next: () => {
+      next: (res) => {
+        this.loading.delete = false;
+        if (!res.success) {
+          this.toast.error(res.message || 'Failed to delete');
+          return;
+        }
         this.toast.success('Message deleted');
         this.router.navigate(['/messages', this.queueName]);
       },
-      error: () => {
-        this.toast.error('Failed to delete');
+      error: (err) => {
         this.loading.delete = false;
+        this.toast.apiError(err, 'Failed to delete');
       }
     });
   }
@@ -99,13 +110,18 @@ export class MessageDetailComponent implements OnInit {
     if (!this.message) return;
     this.loading.dlq = true;
     this.messageService.moveToDLQ(this.queueName, this.message.messageId).subscribe({
-      next: () => {
+      next: (res) => {
+        this.loading.dlq = false;
+        if (!res.success) {
+          this.toast.error(res.message || 'Failed to move to DLQ');
+          return;
+        }
         this.toast.success('Message moved to DLQ');
         this.router.navigate(['/messages', this.queueName]);
       },
       error: (err) => {
-        this.toast.error('Failed to move to DLQ');
         this.loading.dlq = false;
+        this.toast.apiError(err, 'Failed to move to DLQ');
       }
     });
   }

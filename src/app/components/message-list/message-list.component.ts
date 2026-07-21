@@ -38,8 +38,8 @@ export class MessageListComponent implements OnInit{
         this.hasFetched = true;
         this.isLoading = false;
       },
-      error: () => {
-        this.toast.error('Failed to fetch messages');
+      error: (err) => {
+        this.toast.apiError(err, 'Failed to fetch messages');
         this.isLoading = false;
       },
     });
@@ -54,14 +54,34 @@ export class MessageListComponent implements OnInit{
   }
 
   deleteMessage(id: string) {
-    this.messageService.deleteMessage(this.queueName, id).subscribe(() => {
-      this.messages = this.messages.filter((m) => m.messageId !== id);
+    this.messageService.deleteMessage(this.queueName, id).subscribe({
+      next: (res) => {
+        if (!res.success) {
+          this.toast.error(res.message || 'Failed to delete');
+          return;
+        }
+        this.toast.success('Message deleted');
+        this.removeFromList(id);
+      },
+      error: (err) => this.toast.apiError(err, 'Failed to delete'),
     });
   }
 
   moveToDLQ(id: string) {
-    this.messageService.moveToDLQ(this.queueName, id).subscribe(() => {
-      this.messages = this.messages.filter((m) => m.messageId !== id);
+    this.messageService.moveToDLQ(this.queueName, id).subscribe({
+      next: (res) => {
+        if (!res.success) {
+          this.toast.error(res.message || 'Failed to move to DLQ');
+          return;
+        }
+        this.toast.success('Message moved to DLQ');
+        this.removeFromList(id);
+      },
+      error: (err) => this.toast.apiError(err, 'Failed to move to DLQ'),
     });
+  }
+
+  private removeFromList(id: string) {
+    this.messages = this.messages.filter((m) => m.messageId !== id);
   }
 }

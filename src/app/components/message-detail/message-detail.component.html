@@ -21,7 +21,7 @@
     <button
       class="btn btn-danger"
       [disabled]="loading.delete"
-      (click)="onDeleteConfirmed()"
+      (click)="showDeleteConfirm()"
     >
       <span *ngIf="loading.delete" class="spinner-border spinner-border-sm me-2"></span>
       Delete
@@ -30,7 +30,7 @@
     <button
       class="btn btn-warning"
       [disabled]="loading.dlq"
-      (click)="onDLQConfirmed()"
+      (click)="showDLQConfirm()"
     >
       <span *ngIf="loading.dlq" class="spinner-border spinner-border-sm me-2"></span>
       Move to DLQ
