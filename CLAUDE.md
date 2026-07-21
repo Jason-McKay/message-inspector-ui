@@ -86,8 +86,28 @@ SCSS per-component. TypeScript is in `strict` mode with `strictTemplates`.
   the success path; an error from that endpoint is a genuine fault and gets a warning toast.
 - `QueueDropdownComponent` hardcodes `userId = 'jason'` (Phase 4 replaces this with the
   authenticated user).
-- **`message-list.html` fires Delete and Move to DLQ with no confirmation.** The modal is wired up
-  in `message-detail` only. Same bug class, still open in the list view.
+- **Destructive actions go through `ConfirmationModalComponent` in *both* list and detail views.**
+  Each has a template-level spec that clicks the rendered button — a spec calling
+  `showDeleteConfirm()` directly passes just as happily when the button is rewired straight to
+  `deleteMessage()`, which is how the bug existed in both templates.
+- **Pass route params to `Router.navigate` raw.** The Router encodes path segments,
+  `ActivatedRoute` decodes them, and `MessageService` encodes for the HTTP call — one encode per
+  boundary. Pre-encoding in `viewMessage()` produced `%253A`, which **Tomcat rejects with a 400
+  before Spring sees it**, so nothing appears in the backend log and the browser reports it as
+  unreachable. This killed the whole detail view for a while.
+- **Every URL the app navigates to needs a route that matches.** `app-routing.module.spec.ts`
+  asserts this. Component specs mock `Router`, which records a `navigate()` to a URL matching
+  nothing without complaint — that is how `/messages/:queueName` came to be missing while four
+  navigations were dead and the suite stayed green.
+- **`<app-queue-dropdown>` is declared in `AppModule` but rendered in no template**, so
+  `QueueSelectionService` has no writer and `MessageListComponent`'s subscription to
+  `selectedQueue$` never fires. The list runs entirely off the text input. Its specs exist and
+  pass. Mounting it is Phase 4 work — and it is why the `/last-used/` bug went unnoticed for
+  three phases.
+- **Two of the three queue-discovery endpoints return `[]` unconditionally**
+  (`artemis-straight`, `artemis-jolokia`); only `artemis-jolokia/names` works. `QueueListComponent`
+  renders all three, so two of its tables are permanently empty. Whether to fix or delete them is
+  an open decision in the plan — do not "fix" the UI side.
 - `app.module.ts` imports **both** `NoopAnimationsModule` and `BrowserAnimationsModule`. Import
   order means Noop wins, so Material/toastr animations are disabled app-wide.
 - Backend base URLs are hardcoded in the services; there are no `src/environments/` files.
