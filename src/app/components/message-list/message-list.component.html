@@ -5,6 +5,12 @@
     View Queues
   </button>
 
+  <!-- Mounting the dropdown here gives QueueSelectionService a writer at last: selecting a
+       queue publishes it to selectedQueue$, which this component subscribes to, and persists
+       it as the authenticated user's last-used queue. Until Phase 4 the component was
+       declared but rendered nowhere. -->
+  <app-queue-dropdown></app-queue-dropdown>
+
   <div class="input-group mb-4 mt-3">
     <input
       type="text"

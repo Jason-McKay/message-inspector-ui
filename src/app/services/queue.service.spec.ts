@@ -36,19 +36,21 @@ describe('QueueService', () => {
       http.expectOne(`${BASE}/artemis-jolokia/names`).flush({ value: [] });
     });
 
+    // No user id in the URL any more: the backend identifies the user from the bearer
+    // token, so a caller can only ever read or write its own preference.
     it('reads the last-used queue from the backend, not the dev server', () => {
-      service.getLastUsedQueue('jason').subscribe();
+      service.getLastUsedQueue().subscribe();
 
-      const req = http.expectOne(`${BASE}/last-used/jason`);
+      const req = http.expectOne(`${BASE}/last-used`);
       expect(req.request.method).toBe('GET');
       expect(req.request.url.startsWith('http://localhost:8080/')).toBeTrue();
       req.flush('DLQ');
     });
 
     it('writes the last-used queue to the backend as text/plain', () => {
-      service.saveLastUsedQueue('jason', 'DLQ').subscribe();
+      service.saveLastUsedQueue('DLQ').subscribe();
 
-      const req = http.expectOne(`${BASE}/last-used/jason`);
+      const req = http.expectOne(`${BASE}/last-used`);
       expect(req.request.method).toBe('POST');
       // A JSON body would be stored verbatim including its quotes, per
       // QueueControllerTest.testSaveLastUsedQueue_JsonBodyIsStoredVerbatimIncludingQuotes.
@@ -56,20 +58,14 @@ describe('QueueService', () => {
       expect(req.request.body).toBe('DLQ');
       req.flush(null);
     });
-
-    it('encodes the user id', () => {
-      service.getLastUsedQueue('a b/c').subscribe();
-
-      http.expectOne(`${BASE}/last-used/a%20b%2Fc`).flush('');
-    });
   });
 
   // Absence of a preference is an empty 200; callers must not treat it as an error.
   it('returns an empty string when the user has no stored preference', () => {
     let result: string | undefined;
-    service.getLastUsedQueue('nobody').subscribe((r) => (result = r));
+    service.getLastUsedQueue().subscribe((r) => (result = r));
 
-    http.expectOne(`${BASE}/last-used/nobody`).flush('', { status: 200, statusText: 'OK' });
+    http.expectOne(`${BASE}/last-used`).flush('', { status: 200, statusText: 'OK' });
 
     expect(result).toBe('');
   });

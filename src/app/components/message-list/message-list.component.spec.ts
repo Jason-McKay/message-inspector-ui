@@ -1,3 +1,4 @@
+import { CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -53,7 +54,10 @@ describe('MessageListComponent', () => {
         { provide: ToastService, useValue: toast },
         { provide: Router, useValue: router },
         { provide: ActivatedRoute, useValue: { snapshot: { paramMap: routeParams } } }
-      ]
+      ],
+      // <app-queue-dropdown> is now mounted in the template; it has its own spec, so ignore
+      // it as an unknown element here rather than pulling its whole dependency tree in.
+      schemas: [CUSTOM_ELEMENTS_SCHEMA]
     });
 
     fixture = TestBed.createComponent(MessageListComponent);

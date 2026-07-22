@@ -3,6 +3,7 @@ import { Router } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 
 import { routes } from './app-routing.module';
+import { AuthService } from './services/auth.service';
 
 /**
  * Guards the routes the components actually navigate to.
@@ -18,7 +19,13 @@ describe('app routes', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      imports: [RouterTestingModule.withRoutes(routes)]
+      imports: [RouterTestingModule.withRoutes(routes)],
+      // The app routes are behind authGuard now; sign in via a stub so the point under test
+      // stays "do these URLs match a route" rather than the guard's redirect (which
+      // auth.guard.spec covers).
+      providers: [
+        { provide: AuthService, useValue: { isAuthenticated: () => true } }
+      ]
     });
     router = TestBed.inject(Router);
   });
@@ -32,6 +39,7 @@ describe('app routes', () => {
       expect(succeeded).withContext(`${url} did not match any route`).toBeTrue();
     }));
 
+  itResolves('/login');
   itResolves('/messages');
   itResolves('/messages/testQueue');
   itResolves('/messages/testQueue/ID:abc-123');
