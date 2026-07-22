@@ -130,7 +130,9 @@ describe('QueueDropdownComponent', () => {
 
       expect(component.selectedQueue).toBe('DLQ');
       expect(selection.getSelectedQueue()).toBe('DLQ');
-      expect(queueService.saveLastUsedQueue).toHaveBeenCalledWith(component.userId, 'DLQ');
+      // No user id: the backend derives the user from the token, so the call is just the
+      // queue name.
+      expect(queueService.saveLastUsedQueue).toHaveBeenCalledWith('DLQ');
     });
 
     // Persisting the preference is best-effort: the selection must still take effect.

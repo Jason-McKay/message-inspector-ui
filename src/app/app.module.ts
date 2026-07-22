@@ -1,6 +1,6 @@
 import { NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
-import { HttpClientModule } from '@angular/common/http';
+import { HTTP_INTERCEPTORS, HttpClientModule } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
@@ -17,6 +17,8 @@ import { MessageDetailComponent } from './components/message-detail/message-deta
 import { ConfirmationModalComponent } from './components/confirmation-modal/confirmation-modal.component';
 import { QueueListComponent } from './components/queue-list/queue-list.component';
 import { QueueDropdownComponent } from './components/queue-dropdown/queue-dropdown.component';
+import { LoginComponent } from './components/login/login.component';
+import { AuthInterceptor } from './services/auth.interceptor';
 
 @NgModule({
   declarations: [
@@ -25,7 +27,8 @@ import { QueueDropdownComponent } from './components/queue-dropdown/queue-dropdo
     MessageDetailComponent,
     ConfirmationModalComponent,
     QueueListComponent,
-    QueueDropdownComponent
+    QueueDropdownComponent,
+    LoginComponent
   ],
   imports: [
     HttpClientModule,
@@ -41,7 +44,10 @@ import { QueueDropdownComponent } from './components/queue-dropdown/queue-dropdo
     BrowserAnimationsModule,
     ToastrModule.forRoot(),
   ],
-  providers: [],
+  providers: [
+    // Attaches the bearer token to backend calls and bounces a 401 to /login.
+    { provide: HTTP_INTERCEPTORS, useClass: AuthInterceptor, multi: true }
+  ],
   bootstrap: [AppComponent]
 })
 export class AppModule { }

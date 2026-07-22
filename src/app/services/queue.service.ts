@@ -42,20 +42,21 @@ export class QueueService {
   }
 
   /**
-   * Returns the stored queue name, or an empty body when the user has no preference
-   * yet — absence is a 200, not a 404.
+   * Returns the authenticated user's stored queue name, or an empty body when they have no
+   * preference yet — absence is a 200, not a 404. The user is identified by the bearer
+   * token server-side, so there is no user id to pass.
    */
-  getLastUsedQueue(userId: string): Observable<string> {
-    return this.http.get(this.lastUsedUrl(userId), { responseType: 'text' });
+  getLastUsedQueue(): Observable<string> {
+    return this.http.get(this.lastUsedUrl(), { responseType: 'text' });
   }
 
-  saveLastUsedQueue(userId: string, queueName: string): Observable<void> {
-    return this.http.post<void>(this.lastUsedUrl(userId), queueName, {
+  saveLastUsedQueue(queueName: string): Observable<void> {
+    return this.http.post<void>(this.lastUsedUrl(), queueName, {
       headers: { 'Content-Type': 'text/plain' },
     });
   }
 
-  private lastUsedUrl(userId: string): string {
-    return `${this.baseUrl}/last-used/${encodeURIComponent(userId)}`;
+  private lastUsedUrl(): string {
+    return `${this.baseUrl}/last-used`;
   }
 }

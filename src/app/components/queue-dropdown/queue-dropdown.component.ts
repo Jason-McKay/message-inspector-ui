@@ -11,7 +11,6 @@ import {ToastService} from "../../services/toast.service";
 export class QueueDropdownComponent implements OnInit {
   queues: string[] = [];
   selectedQueue: string | null = null;
-  readonly userId = 'jason';
 
   constructor(
     private queueService: QueueService,
@@ -34,13 +33,13 @@ export class QueueDropdownComponent implements OnInit {
     this.selectionService.setSelectedQueue(queue);
     // Best-effort: losing the preference is not worth interrupting the user over,
     // but it should not fail silently either.
-    this.queueService.saveLastUsedQueue(this.userId, queue).subscribe({
+    this.queueService.saveLastUsedQueue(queue).subscribe({
       error: () => this.toast.warning('Could not save your queue preference')
     });
   }
 
   private restoreLastUsedQueue() {
-    this.queueService.getLastUsedQueue(this.userId).subscribe({
+    this.queueService.getLastUsedQueue().subscribe({
       // No preference yet arrives as an empty 200, not an error, so the empty case is
       // handled here and silently — it is the normal first run.
       next: (queueName) => {

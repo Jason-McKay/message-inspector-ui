@@ -1,11 +1,17 @@
 import { TestBed } from '@angular/core/testing';
 import { RouterTestingModule } from '@angular/router/testing';
 import { AppComponent } from './app.component';
+import { AuthService } from './services/auth.service';
 
 describe('AppComponent', () => {
   beforeEach(() => TestBed.configureTestingModule({
     imports: [RouterTestingModule],
-    declarations: [AppComponent]
+    declarations: [AppComponent],
+    // AppComponent reads the session for the navbar's signed-in state; a signed-out stub
+    // keeps these smoke tests off the real AuthService (which needs HttpClient).
+    providers: [
+      { provide: AuthService, useValue: { isAuthenticated: () => false, username: null } }
+    ]
   }));
 
   it('should create the app', () => {
