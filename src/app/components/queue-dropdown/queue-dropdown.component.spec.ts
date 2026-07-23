@@ -1,7 +1,7 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
-import { of, throwError } from 'rxjs';
+import { of, Subject, throwError } from 'rxjs';
 
 import { QueueDropdownComponent } from './queue-dropdown.component';
 import { QueueService, JolokiaResponse } from '../../services/queue.service';
@@ -69,7 +69,37 @@ describe('QueueDropdownComponent', () => {
 
       expect(toast.apiError).toHaveBeenCalled();
       expect(component.queues).toEqual([]);
+      expect(component.isLoading).toBeFalse();
       expect(queueService.getLastUsedQueue).not.toHaveBeenCalled();
+    });
+
+    // NgModel applies a [disabled] binding in a microtask, hence fakeAsync/tick.
+    it('disables the select with a placeholder while loading', fakeAsync(() => {
+      const pending = new Subject<JolokiaResponse<string[]>>();
+      queueService.fetchAllQueueNames.and.returnValue(pending.asObservable());
+
+      fixture.detectChanges();
+      tick();
+
+      const select: HTMLSelectElement = fixture.nativeElement.querySelector('select');
+      expect(select.disabled).toBeTrue();
+      expect(select.textContent).toContain('Loading queues…');
+
+      pending.next(jolokia(QUEUES));
+      pending.complete();
+      fixture.detectChanges();
+      tick();
+
+      expect(select.disabled).toBeFalse();
+      expect(select.textContent).not.toContain('Loading queues…');
+    }));
+
+    it('notes when the broker has no queues at all', () => {
+      queueService.fetchAllQueueNames.and.returnValue(of(jolokia([])));
+
+      fixture.detectChanges();
+
+      expect(fixture.nativeElement.textContent).toContain('No queues available');
     });
   });
 

@@ -11,6 +11,7 @@ import {ToastService} from "../../services/toast.service";
 export class QueueDropdownComponent implements OnInit {
   queues: string[] = [];
   selectedQueue: string | null = null;
+  isLoading = true;
 
   constructor(
     private queueService: QueueService,
@@ -21,10 +22,14 @@ export class QueueDropdownComponent implements OnInit {
   ngOnInit(): void {
     this.queueService.fetchAllQueueNames().subscribe({
       next: (response) => {
+        this.isLoading = false;
         this.queues = response.value ?? [];
         this.restoreLastUsedQueue();
       },
-      error: (err) => this.toast.apiError(err, 'Failed to load queues')
+      error: (err) => {
+        this.isLoading = false;
+        this.toast.apiError(err, 'Failed to load queues');
+      }
     });
   }
 
