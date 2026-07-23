@@ -21,9 +21,9 @@ export class QueueDropdownComponent implements OnInit {
 
   ngOnInit(): void {
     this.queueService.fetchAllQueueNames().subscribe({
-      next: (response) => {
+      next: (queues) => {
         this.isLoading = false;
-        this.queues = response.value ?? [];
+        this.queues = queues;
         this.restoreLastUsedQueue();
       },
       error: (err) => {

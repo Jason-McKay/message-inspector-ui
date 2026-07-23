@@ -34,6 +34,9 @@ describe('QueueService', () => {
 
       service.fetchAllQueueNames().subscribe();
       http.expectOne(`${BASE}/artemis-jolokia/names`).flush({ value: [] });
+
+      // The assertions here are the expectOne calls; verify() in afterEach seals them.
+      expect().nothing();
     });
 
     // No user id in the URL any more: the backend identifies the user from the bearer
@@ -57,6 +60,35 @@ describe('QueueService', () => {
       expect(req.request.headers.get('Content-Type')).toBe('text/plain');
       expect(req.request.body).toBe('DLQ');
       req.flush(null);
+    });
+  });
+
+  // Transitional guard for the backend's envelope unwrap: the service must deliver plain
+  // names whichever shape the running backend sends, so either side can deploy first.
+  // Once the backend change has landed everywhere, the envelope case (and the map shim it
+  // pins) can be deleted together.
+  describe('queue-name unwrapping', () => {
+    it('unwraps the historical Jolokia envelope', () => {
+      let result: string[] | undefined;
+      service.fetchAllQueueNames().subscribe((r) => (result = r));
+
+      http.expectOne(`${BASE}/artemis-jolokia/names`).flush({
+        request: { type: 'read' },
+        value: ['DLQ', 'orders.queue'],
+        timestamp: 0,
+        status: 200
+      });
+
+      expect(result).toEqual(['DLQ', 'orders.queue']);
+    });
+
+    it('passes a bare array straight through', () => {
+      let result: string[] | undefined;
+      service.fetchAllQueueNames().subscribe((r) => (result = r));
+
+      http.expectOne(`${BASE}/artemis-jolokia/names`).flush(['DLQ', 'orders.queue']);
+
+      expect(result).toEqual(['DLQ', 'orders.queue']);
     });
   });
 

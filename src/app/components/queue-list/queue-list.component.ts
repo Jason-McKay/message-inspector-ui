@@ -53,7 +53,7 @@ export class QueueListComponent implements OnInit {
 
     this.queueService.fetchAllQueueNames().subscribe({
       next: (data) => {
-        this.queueNamesJolokia = data.value ?? [];
+        this.queueNamesJolokia = data;
         this.loading3 = false;
       },
       error: (err) => {

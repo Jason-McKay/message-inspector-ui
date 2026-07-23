@@ -4,18 +4,11 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { of, Subject, throwError } from 'rxjs';
 
 import { QueueDropdownComponent } from './queue-dropdown.component';
-import { QueueService, JolokiaResponse } from '../../services/queue.service';
+import { QueueService } from '../../services/queue.service';
 import { QueueSelectionService } from '../../services/queue-selection.service';
 import { ToastService } from '../../services/toast.service';
 
 const QUEUES = ['DLQ', 'orders.queue'];
-
-const jolokia = (value: string[]): JolokiaResponse<string[]> => ({
-  request: { type: 'read' },
-  value,
-  timestamp: 0,
-  status: 200
-});
 
 describe('QueueDropdownComponent', () => {
   let component: QueueDropdownComponent;
@@ -33,7 +26,7 @@ describe('QueueDropdownComponent', () => {
       'success', 'error', 'info', 'warning', 'apiError'
     ]);
 
-    queueService.fetchAllQueueNames.and.returnValue(of(jolokia(QUEUES)));
+    queueService.fetchAllQueueNames.and.returnValue(of(QUEUES));
     queueService.getLastUsedQueue.and.returnValue(of(''));
     queueService.saveLastUsedQueue.and.returnValue(of(void 0));
 
@@ -52,9 +45,9 @@ describe('QueueDropdownComponent', () => {
   });
 
   describe('loading queue names', () => {
-    // The Jolokia endpoints wrap their payload in a JMX envelope; the names are in
-    // `value`, not the response body itself.
-    it('reads the names out of the Jolokia envelope', () => {
+    // The envelope-vs-bare-array question lives in QueueService now (see
+    // queue.service.spec.ts); this component just receives plain names.
+    it('loads the queue names', () => {
       fixture.detectChanges();
 
       expect(component.queues).toEqual(QUEUES);
@@ -75,7 +68,7 @@ describe('QueueDropdownComponent', () => {
 
     // NgModel applies a [disabled] binding in a microtask, hence fakeAsync/tick.
     it('disables the select with a placeholder while loading', fakeAsync(() => {
-      const pending = new Subject<JolokiaResponse<string[]>>();
+      const pending = new Subject<string[]>();
       queueService.fetchAllQueueNames.and.returnValue(pending.asObservable());
 
       fixture.detectChanges();
@@ -85,7 +78,7 @@ describe('QueueDropdownComponent', () => {
       expect(select.disabled).toBeTrue();
       expect(select.textContent).toContain('Loading queues…');
 
-      pending.next(jolokia(QUEUES));
+      pending.next(QUEUES);
       pending.complete();
       fixture.detectChanges();
       tick();
@@ -95,7 +88,7 @@ describe('QueueDropdownComponent', () => {
     }));
 
     it('notes when the broker has no queues at all', () => {
-      queueService.fetchAllQueueNames.and.returnValue(of(jolokia([])));
+      queueService.fetchAllQueueNames.and.returnValue(of([]));
 
       fixture.detectChanges();
 

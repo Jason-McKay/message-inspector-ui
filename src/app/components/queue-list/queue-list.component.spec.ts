@@ -4,20 +4,13 @@ import { ToastrService } from 'ngx-toastr';
 import { of, Subject, throwError } from 'rxjs';
 
 import { QueueListComponent } from './queue-list.component';
-import { QueueService, JmsQueueDto, JolokiaResponse } from '../../services/queue.service';
+import { QueueService, JmsQueueDto } from '../../services/queue.service';
 import { ToastService } from '../../services/toast.service';
 
 const queue = (id: string, name: string): JmsQueueDto => ({
   queueId: id,
   queueName: name,
   messageCount: 3
-});
-
-const jolokia = (value: string[]): JolokiaResponse<string[]> => ({
-  request: { type: 'read' },
-  value,
-  timestamp: 0,
-  status: 200
 });
 
 const failure = (status: number, message?: string) =>
@@ -39,7 +32,7 @@ describe('QueueListComponent', () => {
 
     queueService.getAllQueues.and.returnValue(of([]));
     queueService.fetchAllQueues.and.returnValue(of([]));
-    queueService.fetchAllQueueNames.and.returnValue(of(jolokia([])));
+    queueService.fetchAllQueueNames.and.returnValue(of([]));
 
     TestBed.configureTestingModule({
       declarations: [QueueListComponent],
@@ -65,7 +58,7 @@ describe('QueueListComponent', () => {
   it('loads all three queue sources on init', () => {
     queueService.getAllQueues.and.returnValue(of([queue('1', 'DLQ')]));
     queueService.fetchAllQueues.and.returnValue(of([queue('2', 'testQueue')]));
-    queueService.fetchAllQueueNames.and.returnValue(of(jolokia(['DLQ', 'testQueue'])));
+    queueService.fetchAllQueueNames.and.returnValue(of(['DLQ', 'testQueue']));
 
     build();
 
@@ -102,7 +95,7 @@ describe('QueueListComponent', () => {
     it('keeps the other two sources when one fails', () => {
       queueService.getAllQueues.and.returnValue(failure(500));
       queueService.fetchAllQueues.and.returnValue(of([queue('2', 'testQueue')]));
-      queueService.fetchAllQueueNames.and.returnValue(of(jolokia(['DLQ'])));
+      queueService.fetchAllQueueNames.and.returnValue(of(['DLQ']));
 
       build();
 
