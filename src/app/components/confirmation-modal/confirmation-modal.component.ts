@@ -1,5 +1,12 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 
+/**
+ * A plain presentational confirm dialog — an overlay with a message and Yes/Cancel, driven
+ * entirely by `@Input`/`@Output` (not a Material dialog). The parent owns the state: it
+ * binds `visible`/`actionLabel` and reacts to `confirm`/`cancel`. Destructive actions in
+ * both the list and detail views route through this rather than calling the service
+ * directly.
+ */
 @Component({
   selector: 'app-confirmation-modal',
   templateUrl: './confirmation-modal.component.html',
