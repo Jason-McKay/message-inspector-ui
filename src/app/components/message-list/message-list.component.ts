@@ -5,6 +5,13 @@ import {ToastService} from "../../services/toast.service";
 import {QueueSelectionService} from "../../services/queue-selection.service";
 import {JmsMessage} from "../../shared/models/jms-message.model";
 
+/**
+ * The main screen: the messages on the selected queue, plus per-row View / Delete / Move-
+ * to-DLQ actions. It reacts to {@link QueueSelectionService} (the dropdown's writes and a
+ * deep-linked route both flow through there) and also accepts a queue typed into the box.
+ * Destructive actions go through {@link ConfirmationModalComponent}; failed loads render
+ * inline (not as a toast), and a body-level failure keeps the row rather than removing it.
+ */
 @Component({
   selector: 'app-message-list',
   templateUrl: './message-list.component.html',

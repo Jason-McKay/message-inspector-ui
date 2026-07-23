@@ -4,6 +4,12 @@ import {QueueSelectionService} from "../../services/queue-selection.service";
 import {ToastService} from "../../services/toast.service";
 
 
+/**
+ * The queue picker. Loads the queue names, restores the user's last-used queue on init
+ * (unless a route has already set a selection — the route wins), and publishes every choice
+ * to {@link QueueSelectionService}, which is what drives the message list. Selecting a queue
+ * also persists it as the authenticated user's preference, best-effort.
+ */
 @Component({
   selector: 'app-queue-dropdown',
   templateUrl: './queue-dropdown.component.html',

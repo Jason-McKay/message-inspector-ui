@@ -4,6 +4,15 @@ import {Observable} from "rxjs";
 import {JmsMessage} from "../shared/models/jms-message.model";
 import {ApiResponse} from "../shared/models/api-response.model";
 
+/**
+ * HTTP access to a queue's messages: list, view one, and the three mutating actions
+ * (resend / delete / move-to-dlq). The mutating calls resolve with an {@link ApiResponse}
+ * whose `success` flag is the real outcome — the backend answers HTTP 200 even on a
+ * business failure, so callers must check the body, not just that `next` fired.
+ *
+ * Queue and message names are `encodeURIComponent`-ed here — exactly once, at the HTTP
+ * boundary. Do not pre-encode upstream (see the routing note in CLAUDE.md).
+ */
 @Injectable({
   providedIn: 'root'
 })

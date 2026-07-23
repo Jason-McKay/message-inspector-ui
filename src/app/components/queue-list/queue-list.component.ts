@@ -2,6 +2,13 @@ import {Component, OnInit} from '@angular/core';
 import {JmsQueueDto, QueueService} from "../../services/queue.service";
 import {ToastService} from "../../services/toast.service";
 
+/**
+ * A diagnostic view of all three queue-discovery sources side by side. Two of them
+ * (`artemis-straight`, `artemis-jolokia`) are dead on the backend and return `[]` — so two
+ * of these tables are permanently empty by design, shown with an honest empty state rather
+ * than hidden. Only the queue-names source works. The three load independently: one failing
+ * does not blank the others.
+ */
 @Component({
   selector: 'app-queue-list',
   templateUrl: './queue-list.component.html',

@@ -4,6 +4,12 @@ import { Router } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { ToastService } from '../../services/toast.service';
 
+/**
+ * The sign-in form. Exchanges credentials for a JWT via {@link AuthService} and, on
+ * success, navigates to the message list; the whole app sits behind `authGuard`, so this is
+ * where an unauthenticated user lands. Bad credentials come back as 401 and surface through
+ * {@link ToastService}.
+ */
 @Component({
   selector: 'app-login',
   templateUrl: './login.component.html',

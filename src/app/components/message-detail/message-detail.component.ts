@@ -4,6 +4,13 @@ import { MessageService } from '../../services/message.service';
 import { ToastService } from '../../services/toast.service';
 import {JmsMessage} from "../../shared/models/jms-message.model";
 
+/**
+ * One message in full: its properties and its payload (pretty-printed by the
+ * `prettyPayload` pipe — JSON re-indented, XML indented, anything else left raw), plus the
+ * resend / delete / move-to-DLQ actions, each behind {@link ConfirmationModalComponent}.
+ * A missing message arrives as an empty 200 (not a 404) and is treated as "not found"; a
+ * failed load renders an inline error with a Back button rather than a blank page.
+ */
 @Component({
   selector: 'app-message-detail',
   templateUrl: './message-detail.component.html',
