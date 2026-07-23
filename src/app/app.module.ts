@@ -14,6 +14,7 @@ import { QueueListComponent } from './components/queue-list/queue-list.component
 import { QueueDropdownComponent } from './components/queue-dropdown/queue-dropdown.component';
 import { LoginComponent } from './components/login/login.component';
 import { AuthInterceptor } from './services/auth.interceptor';
+import { PrettyPayloadPipe } from './shared/pipes/pretty-payload.pipe';
 
 @NgModule({
   declarations: [
@@ -23,7 +24,8 @@ import { AuthInterceptor } from './services/auth.interceptor';
     ConfirmationModalComponent,
     QueueListComponent,
     QueueDropdownComponent,
-    LoginComponent
+    LoginComponent,
+    PrettyPayloadPipe
   ],
   imports: [
     HttpClientModule,
