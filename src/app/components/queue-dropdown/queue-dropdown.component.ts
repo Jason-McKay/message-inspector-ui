@@ -20,6 +20,10 @@ export class QueueDropdownComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
+    // Keep the displayed selection in sync with whoever set it -- a deep link publishes
+    // the route queue before this component's data arrives.
+    this.selectionService.selectedQueue$.subscribe((queue) => (this.selectedQueue = queue));
+
     this.queueService.fetchAllQueueNames().subscribe({
       next: (queues) => {
         this.isLoading = false;
@@ -48,8 +52,11 @@ export class QueueDropdownComponent implements OnInit {
       // No preference yet arrives as an empty 200, not an error, so the empty case is
       // handled here and silently — it is the normal first run.
       next: (queueName) => {
+        // A selection that already exists came from the route (deep link, or returning
+        // from the detail view) and must win over the stored preference — restoring it
+        // over the route queue silently showed the wrong queue's messages.
+        if (this.selectionService.getSelectedQueue()) return;
         if (queueName && this.queues.includes(queueName)) {
-          this.selectedQueue = queueName;
           this.selectionService.setSelectedQueue(queueName);
         }
       },

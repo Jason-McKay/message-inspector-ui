@@ -130,6 +130,20 @@ describe('QueueDropdownComponent', () => {
       expect(toast.apiError).not.toHaveBeenCalled();
     });
 
+    // A selection that already exists came from the route — a deep link or returning
+    // from the detail view. The stored preference must not override it: restoring over
+    // the route queue silently showed the wrong queue's messages (found 2026-07-23,
+    // Phase 5 manual pass — both DLQ and ExpiryQueue rendered testQueue's rows).
+    it('leaves a route-driven selection alone', () => {
+      selection.setSelectedQueue('route.queue');
+      queueService.getLastUsedQueue.and.returnValue(of('orders.queue'));
+
+      fixture.detectChanges();
+
+      expect(selection.getSelectedQueue()).toBe('route.queue');
+      expect(component.selectedQueue).toBe('route.queue');
+    });
+
     // Since absence is not an error, an error here is a genuine fault (Redis down,
     // say) and should be surfaced rather than swallowed.
     it('warns when the lookup itself fails, without blocking the dropdown', () => {

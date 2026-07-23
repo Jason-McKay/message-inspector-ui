@@ -30,11 +30,13 @@ export class MessageListComponent implements OnInit{
     });
 
     // Deep link: /messages/:queueName pre-loads that queue. This is the path taken when
-    // returning here from the detail view.
+    // returning here from the detail view. Published as the shared selection -- not
+    // fetched directly -- so the dropdown displays it and the last-used-queue restore
+    // sees it and stands down. Fetching here directly is how the route queue silently
+    // lost to the restored preference (found 2026-07-23, Phase 5 manual pass).
     const routeQueue = this.route.snapshot.paramMap.get('queueName');
     if (routeQueue) {
-      this.queueName = routeQueue;
-      this.fetchMessages();
+      this.selectionService.setSelectedQueue(routeQueue);
     }
   }
 

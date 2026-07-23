@@ -88,8 +88,11 @@ describe('MessageListComponent', () => {
     });
 
     // /messages/:queueName is what MessageDetailComponent navigates back to after a
-    // delete or DLQ move, and what "Back to List" uses.
-    it('pre-loads the queue named in the route', () => {
+    // delete or DLQ move, and what "Back to List" uses. It must be PUBLISHED as the
+    // shared selection, not just fetched: the dropdown's last-used restore checks the
+    // selection before overriding, and a direct fetch left it null — which is how a
+    // stored preference silently replaced the deep-linked queue (2026-07-23).
+    it('pre-loads the queue named in the route and publishes it as the selection', () => {
       routeParams.set('queueName', QUEUE);
       messageService.getMessages.and.returnValue(of([message('a')]));
 
@@ -98,6 +101,7 @@ describe('MessageListComponent', () => {
       expect(messageService.getMessages).toHaveBeenCalledWith(QUEUE);
       expect(component.queueName).toBe(QUEUE);
       expect(component.messages.length).toBe(1);
+      expect(selection.getSelectedQueue()).toBe(QUEUE);
     });
 
     // Load failures render inline, not as a toast: a vanishing toast over a
