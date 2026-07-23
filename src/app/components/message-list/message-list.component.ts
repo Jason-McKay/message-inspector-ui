@@ -3,6 +3,7 @@ import { MessageService } from 'src/app/services/message.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import {ToastService} from "../../services/toast.service";
 import {QueueSelectionService} from "../../services/queue-selection.service";
+import {JmsMessage} from "../../shared/models/jms-message.model";
 
 @Component({
   selector: 'app-message-list',
@@ -11,10 +12,11 @@ import {QueueSelectionService} from "../../services/queue-selection.service";
 })
 export class MessageListComponent implements OnInit{
   queueName: string = '';
-  messages: any[] = [];
+  messages: JmsMessage[] = [];
   selectedQueue: string | null = null;
   hasFetched: boolean = false;
   isLoading: boolean = false;
+  loadError: string = '';
 
   constructor(private selectionService: QueueSelectionService, private messageService: MessageService, private route: ActivatedRoute, private router: Router, private toast: ToastService) {}
 
@@ -40,6 +42,7 @@ export class MessageListComponent implements OnInit{
     if (!this.queueName) return;
 
     this.isLoading = true;
+    this.loadError = '';
     this.messageService.getMessages(this.queueName).subscribe({
       next: (messages) => {
         this.messages = messages;
@@ -47,7 +50,9 @@ export class MessageListComponent implements OnInit{
         this.isLoading = false;
       },
       error: (err) => {
-        this.toast.apiError(err, 'Failed to fetch messages');
+        // Inline rather than a toast: a vanishing toast over a silently-stale table left
+        // no persistent sign the load failed. Mutations below keep their toasts.
+        this.loadError = this.toast.describeApiError(err, 'Failed to fetch messages');
         this.isLoading = false;
       },
     });

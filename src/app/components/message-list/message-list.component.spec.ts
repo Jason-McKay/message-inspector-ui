@@ -3,7 +3,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ActivatedRoute, Router } from '@angular/router';
-import { of, throwError } from 'rxjs';
+import { of, Subject, throwError } from 'rxjs';
 
 import { MessageListComponent } from './message-list.component';
 import { ConfirmationModalComponent } from '../confirmation-modal/confirmation-modal.component';
@@ -39,8 +39,9 @@ describe('MessageListComponent', () => {
       'getMessages', 'getMessage', 'resendMessage', 'deleteMessage', 'moveToDLQ'
     ]);
     toast = jasmine.createSpyObj<ToastService>('ToastService', [
-      'success', 'error', 'info', 'warning', 'apiError'
+      'success', 'error', 'info', 'warning', 'apiError', 'describeApiError'
     ]);
+    toast.describeApiError.and.returnValue('described error');
     router = jasmine.createSpyObj<Router>('Router', ['navigate']);
 
     messageService.getMessages.and.returnValue(of([]));
@@ -99,17 +100,75 @@ describe('MessageListComponent', () => {
       expect(component.messages.length).toBe(1);
     });
 
-    it('reports a failed fetch and stops loading', () => {
+    // Load failures render inline, not as a toast: a vanishing toast over a
+    // silently-stale table left no persistent sign the load failed.
+    it('reports a failed fetch inline and stops loading', () => {
       messageService.getMessages.and.returnValue(
         throwError(() => new HttpErrorResponse({ status: 502 }))
       );
       fixture.detectChanges();
 
       selection.setSelectedQueue(QUEUE);
+      fixture.detectChanges();
 
-      expect(toast.apiError).toHaveBeenCalled();
+      expect(toast.apiError).not.toHaveBeenCalled();
+      expect(component.loadError).toBe('described error');
       expect(component.isLoading).toBeFalse();
       expect(component.hasFetched).toBeFalse();
+
+      const alert = fixture.nativeElement.querySelector('.alert-danger');
+      expect(alert?.textContent).toContain('described error');
+    });
+
+    it('clears a previous load error when refetching', () => {
+      messageService.getMessages.and.returnValue(
+        throwError(() => new HttpErrorResponse({ status: 502 }))
+      );
+      fixture.detectChanges();
+      selection.setSelectedQueue(QUEUE);
+      expect(component.loadError).toBe('described error');
+
+      messageService.getMessages.and.returnValue(of([message('a')]));
+      component.fetchMessages();
+
+      expect(component.loadError).toBe('');
+    });
+  });
+
+  describe('loading state', () => {
+    it('shows a spinner while the fetch is pending and hides it after', () => {
+      const pending = new Subject<JmsMessage[]>();
+      messageService.getMessages.and.returnValue(pending.asObservable());
+      fixture.detectChanges();
+
+      selection.setSelectedQueue(QUEUE);
+      fixture.detectChanges();
+
+      expect(fixture.nativeElement.querySelector('.spinner-border')).toBeTruthy();
+
+      pending.next([message('a')]);
+      pending.complete();
+      fixture.detectChanges();
+
+      expect(fixture.nativeElement.querySelector('.spinner-border')).toBeFalsy();
+      expect(fixture.nativeElement.querySelector('table')).toBeTruthy();
+    });
+
+    // The empty-state alert must not flash underneath the spinner mid-fetch.
+    it('hides the empty state while a fetch is in flight', () => {
+      messageService.getMessages.and.returnValue(of([]));
+      fixture.detectChanges();
+      selection.setSelectedQueue(QUEUE);
+      fixture.detectChanges();
+      expect(fixture.nativeElement.querySelector('.alert-info')).toBeTruthy();
+
+      const pending = new Subject<JmsMessage[]>();
+      messageService.getMessages.and.returnValue(pending.asObservable());
+      component.fetchMessages();
+      fixture.detectChanges();
+
+      expect(fixture.nativeElement.querySelector('.alert-info')).toBeFalsy();
+      expect(fixture.nativeElement.querySelector('.spinner-border')).toBeTruthy();
     });
   });
 
