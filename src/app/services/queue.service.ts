@@ -1,24 +1,11 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { map, Observable } from 'rxjs';
+import { Observable } from 'rxjs';
 
 export interface JmsQueueDto {
   queueId: string;
   queueName: string;
   messageCount: number;
-}
-
-export interface JolokiaResponse<T> {
-  request: RequestDetails;
-  value: T;
-  timestamp: number;
-  status: number;
-}
-
-export interface RequestDetails {
-  type: string;
-  mbean?: string;
-  attribute?: string;
 }
 
 @Injectable({
@@ -37,16 +24,8 @@ export class QueueService {
     return this.http.get<JmsQueueDto[]>(`${this.baseUrl}/artemis-jolokia`);
   }
 
-  /**
-   * Returns plain queue names. Transitional: the backend historically wrapped these in
-   * the Jolokia JMX envelope (names in `.value`) and is being changed to return a bare
-   * array; this accepts both shapes so either side can deploy first. Collapse to a plain
-   * `get<string[]>` once the backend unwrap has landed.
-   */
   fetchAllQueueNames(): Observable<string[]> {
-    return this.http
-      .get<JolokiaResponse<string[]> | string[]>(`${this.baseUrl}/artemis-jolokia/names`)
-      .pipe(map((res) => (Array.isArray(res) ? res : res?.value ?? [])));
+    return this.http.get<string[]>(`${this.baseUrl}/artemis-jolokia/names`);
   }
 
   /**

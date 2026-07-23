@@ -46,8 +46,8 @@ on a queue, view a message, and resend / delete / move-to-DLQ it.
   plus `/resend` and `/move-to-dlq` sub-paths. Queue names are `encodeURIComponent`-ed.
 - `QueueService` — `http://localhost:8080/api/queues`. Three ways to list queues, reflecting two
   backend strategies: `artemis-straight` (direct), `artemis-jolokia`, and
-  `artemis-jolokia/names`. The Jolokia endpoints return the JMX envelope shape
-  `JolokiaResponse<T>` — the payload is in `.value`, not the response body itself.
+  `artemis-jolokia/names`. All three return plain JSON arrays — the Jolokia JMX envelope
+  that `/names` used to pass through is unwrapped server-side since 2026-07-23.
 - `QueueSelectionService` — a `BehaviorSubject<string | null>` that is the single source of truth
   for "which queue am I looking at". `QueueDropdownComponent` writes to it; `MessageListComponent`
   subscribes and refetches on every emission. This is the main cross-component wiring — changing

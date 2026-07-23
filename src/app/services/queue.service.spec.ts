@@ -33,7 +33,7 @@ describe('QueueService', () => {
       http.expectOne(`${BASE}/artemis-jolokia`).flush([]);
 
       service.fetchAllQueueNames().subscribe();
-      http.expectOne(`${BASE}/artemis-jolokia/names`).flush({ value: [] });
+      http.expectOne(`${BASE}/artemis-jolokia/names`).flush([]);
 
       // The assertions here are the expectOne calls; verify() in afterEach seals them.
       expect().nothing();
@@ -63,33 +63,15 @@ describe('QueueService', () => {
     });
   });
 
-  // Transitional guard for the backend's envelope unwrap: the service must deliver plain
-  // names whichever shape the running backend sends, so either side can deploy first.
-  // Once the backend change has landed everywhere, the envelope case (and the map shim it
-  // pins) can be deleted together.
-  describe('queue-name unwrapping', () => {
-    it('unwraps the historical Jolokia envelope', () => {
-      let result: string[] | undefined;
-      service.fetchAllQueueNames().subscribe((r) => (result = r));
+  // The backend unwraps the Jolokia JMX envelope since 2026-07-23; the endpoint returns
+  // a bare JSON array and nothing client-side knows the envelope ever existed.
+  it('receives queue names as a bare array', () => {
+    let result: string[] | undefined;
+    service.fetchAllQueueNames().subscribe((r) => (result = r));
 
-      http.expectOne(`${BASE}/artemis-jolokia/names`).flush({
-        request: { type: 'read' },
-        value: ['DLQ', 'orders.queue'],
-        timestamp: 0,
-        status: 200
-      });
+    http.expectOne(`${BASE}/artemis-jolokia/names`).flush(['DLQ', 'orders.queue']);
 
-      expect(result).toEqual(['DLQ', 'orders.queue']);
-    });
-
-    it('passes a bare array straight through', () => {
-      let result: string[] | undefined;
-      service.fetchAllQueueNames().subscribe((r) => (result = r));
-
-      http.expectOne(`${BASE}/artemis-jolokia/names`).flush(['DLQ', 'orders.queue']);
-
-      expect(result).toEqual(['DLQ', 'orders.queue']);
-    });
+    expect(result).toEqual(['DLQ', 'orders.queue']);
   });
 
   // Absence of a preference is an empty 200; callers must not treat it as an error.
