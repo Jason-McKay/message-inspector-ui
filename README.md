@@ -28,12 +28,12 @@ message list subscribes and refetches on every change.
 flowchart TD
     Login[LoginComponent] -->|JWT to sessionStorage| Auth[AuthService]
     Auth --> Guard[authGuard]
-    Auth --> Intc[AuthInterceptor<br/>bearer + 401 → /login]
+    Auth --> Intc["AuthInterceptor<br/>bearer + 401 → /login"]
     Dropdown[QueueDropdownComponent] -->|setSelectedQueue| Sel[(QueueSelectionService)]
     Route["/messages/:queueName"] -->|publishes route queue| Sel
     Sel -->|selectedQueue$| List[MessageListComponent]
     List -->|View| Detail[MessageDetailComponent]
-    List & Detail -->|HTTP| API[Backend :8080]
+    List & Detail -->|HTTP| API["Backend :8080"]
     Intc -. attaches token .-> API
 ```
 
