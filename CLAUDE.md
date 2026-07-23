@@ -46,8 +46,8 @@ on a queue, view a message, and resend / delete / move-to-DLQ it.
   plus `/resend` and `/move-to-dlq` sub-paths. Queue names are `encodeURIComponent`-ed.
 - `QueueService` — `http://localhost:8080/api/queues`. Three ways to list queues, reflecting two
   backend strategies: `artemis-straight` (direct), `artemis-jolokia`, and
-  `artemis-jolokia/names`. The Jolokia endpoints return the JMX envelope shape
-  `JolokiaResponse<T>` — the payload is in `.value`, not the response body itself.
+  `artemis-jolokia/names`. All three return plain JSON arrays — the Jolokia JMX envelope
+  that `/names` used to pass through is unwrapped server-side since 2026-07-23.
 - `QueueSelectionService` — a `BehaviorSubject<string | null>` that is the single source of truth
   for "which queue am I looking at". `QueueDropdownComponent` writes to it; `MessageListComponent`
   subscribes and refetches on every emission. This is the main cross-component wiring — changing
@@ -71,8 +71,9 @@ Destructive actions there go through `showDeleteConfirm()` / `showDLQConfirm()`,
 straight to `onDeleteConfirmed()` / `onDLQConfirmed()` — a spec guards this, because the
 template previously called the latter and the modal never opened.
 
-**Styling:** Bootstrap 5 (global, via `angular.json` styles) plus Angular Material components,
-SCSS per-component. TypeScript is in `strict` mode with `strictTemplates`.
+**Styling:** Bootstrap 5 (global, via `angular.json` styles), SCSS per-component. No Angular
+Material modules are imported — all UI is Bootstrap markup (`@angular/material` remains a
+dependency only for its theming in `styles.scss`). TypeScript is in `strict` mode with `strictTemplates`.
 
 ## Gotchas
 
@@ -108,6 +109,4 @@ SCSS per-component. TypeScript is in `strict` mode with `strictTemplates`.
   (`artemis-straight`, `artemis-jolokia`); only `artemis-jolokia/names` works. `QueueListComponent`
   renders all three, so two of its tables are permanently empty. Whether to fix or delete them is
   an open decision in the plan — do not "fix" the UI side.
-- `app.module.ts` imports **both** `NoopAnimationsModule` and `BrowserAnimationsModule`. Import
-  order means Noop wins, so Material/toastr animations are disabled app-wide.
 - Backend base URLs are hardcoded in the services; there are no `src/environments/` files.

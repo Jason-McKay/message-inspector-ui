@@ -33,7 +33,10 @@ describe('QueueService', () => {
       http.expectOne(`${BASE}/artemis-jolokia`).flush([]);
 
       service.fetchAllQueueNames().subscribe();
-      http.expectOne(`${BASE}/artemis-jolokia/names`).flush({ value: [] });
+      http.expectOne(`${BASE}/artemis-jolokia/names`).flush([]);
+
+      // The assertions here are the expectOne calls; verify() in afterEach seals them.
+      expect().nothing();
     });
 
     // No user id in the URL any more: the backend identifies the user from the bearer
@@ -58,6 +61,17 @@ describe('QueueService', () => {
       expect(req.request.body).toBe('DLQ');
       req.flush(null);
     });
+  });
+
+  // The backend unwraps the Jolokia JMX envelope since 2026-07-23; the endpoint returns
+  // a bare JSON array and nothing client-side knows the envelope ever existed.
+  it('receives queue names as a bare array', () => {
+    let result: string[] | undefined;
+    service.fetchAllQueueNames().subscribe((r) => (result = r));
+
+    http.expectOne(`${BASE}/artemis-jolokia/names`).flush(['DLQ', 'orders.queue']);
+
+    expect(result).toEqual(['DLQ', 'orders.queue']);
   });
 
   // Absence of a preference is an empty 200; callers must not treat it as an error.

@@ -1,4 +1,4 @@
-.modal-backdrop {
+.confirm-backdrop {
   position: fixed;
   top: 0;
   left: 0;
@@ -8,13 +8,15 @@
   display: flex;
   justify-content: center;
   align-items: center;
+  // Above Bootstrap's stacking scale (its modals top out at 1055).
+  z-index: 1060;
 }
 
-.modal-content {
+.confirm-dialog {
   background: white;
   padding: 1.5rem;
   border-radius: 8px;
-  width: 300px;
+  width: min(90vw, 320px);
   text-align: center;
 
   .actions {

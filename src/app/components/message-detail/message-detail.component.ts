@@ -13,6 +13,8 @@ export class MessageDetailComponent implements OnInit {
   message: JmsMessage | null = null;
   @Input()queueName = '';
   loading = { resend: false, delete: false, dlq: false };
+  isLoading = true;
+  loadError: string | null = null;
 
   constructor(
     private route: ActivatedRoute,
@@ -26,6 +28,7 @@ export class MessageDetailComponent implements OnInit {
     const messageId = this.route.snapshot.paramMap.get('messageId')!;
     this.messageService.getMessage(this.queueName, messageId).subscribe({
       next: (msg) => {
+        this.isLoading = false;
         // A message that is not on the queue comes back as 200 with an empty body,
         // not 404, so absence has to be detected here rather than in the error branch.
         if (!msg || !msg.messageId) {
@@ -35,8 +38,25 @@ export class MessageDetailComponent implements OnInit {
         }
         this.message = msg;
       },
-      error: (err) => this.toast.apiError(err, 'Failed to fetch message')
+      error: (err) => {
+        // Inline rather than a toast: before this, a failed load left a blank page.
+        this.isLoading = false;
+        this.loadError = this.toast.describeApiError(err, 'Failed to fetch message');
+      }
     });
+  }
+
+  // Resend goes through the same confirmation as delete and DLQ: it writes a new
+  // message onto the queue, which is not obviously reversible either.
+  showResendConfirm() {
+    this.confirm = {
+      visible: true,
+      action: 'Resend this message?',
+      handler: () => {
+        this.confirm.visible = false;
+        this.onResend();
+      }
+    };
   }
 
   onResend() {

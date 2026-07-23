@@ -1,23 +1,16 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ToastrService } from 'ngx-toastr';
-import { of, throwError } from 'rxjs';
+import { of, Subject, throwError } from 'rxjs';
 
 import { QueueListComponent } from './queue-list.component';
-import { QueueService, JmsQueueDto, JolokiaResponse } from '../../services/queue.service';
+import { QueueService, JmsQueueDto } from '../../services/queue.service';
 import { ToastService } from '../../services/toast.service';
 
 const queue = (id: string, name: string): JmsQueueDto => ({
   queueId: id,
   queueName: name,
   messageCount: 3
-});
-
-const jolokia = (value: string[]): JolokiaResponse<string[]> => ({
-  request: { type: 'read' },
-  value,
-  timestamp: 0,
-  status: 200
 });
 
 const failure = (status: number, message?: string) =>
@@ -39,7 +32,7 @@ describe('QueueListComponent', () => {
 
     queueService.getAllQueues.and.returnValue(of([]));
     queueService.fetchAllQueues.and.returnValue(of([]));
-    queueService.fetchAllQueueNames.and.returnValue(of(jolokia([])));
+    queueService.fetchAllQueueNames.and.returnValue(of([]));
 
     TestBed.configureTestingModule({
       declarations: [QueueListComponent],
@@ -65,7 +58,7 @@ describe('QueueListComponent', () => {
   it('loads all three queue sources on init', () => {
     queueService.getAllQueues.and.returnValue(of([queue('1', 'DLQ')]));
     queueService.fetchAllQueues.and.returnValue(of([queue('2', 'testQueue')]));
-    queueService.fetchAllQueueNames.and.returnValue(of(jolokia(['DLQ', 'testQueue'])));
+    queueService.fetchAllQueueNames.and.returnValue(of(['DLQ', 'testQueue']));
 
     build();
 
@@ -102,7 +95,7 @@ describe('QueueListComponent', () => {
     it('keeps the other two sources when one fails', () => {
       queueService.getAllQueues.and.returnValue(failure(500));
       queueService.fetchAllQueues.and.returnValue(of([queue('2', 'testQueue')]));
-      queueService.fetchAllQueueNames.and.returnValue(of(jolokia(['DLQ'])));
+      queueService.fetchAllQueueNames.and.returnValue(of(['DLQ']));
 
       build();
 
@@ -111,6 +104,42 @@ describe('QueueListComponent', () => {
       expect(component.queueNamesJolokia).toEqual(['DLQ']);
       expect(component.error2).toBe('');
       expect(component.error3).toBe('');
+    });
+
+    it('renders failures as inline alerts', () => {
+      queueService.getAllQueues.and.returnValue(failure(502, 'Broker unavailable.'));
+
+      build();
+
+      const alert = fixture.nativeElement.querySelector('.alert-danger');
+      expect(alert?.textContent).toContain('Broker unavailable.');
+    });
+  });
+
+  describe('rendered states', () => {
+    // Two of the three sources return [] unconditionally (known gap, deliberately
+    // deferred); the empty state makes that honest instead of invisible.
+    it('shows an empty state per source instead of a blank area', () => {
+      build();
+
+      const empties = fixture.nativeElement.querySelectorAll('.alert-info');
+      expect(empties.length).toBe(3);
+    });
+
+    it('shows a spinner for a source while its fetch is pending', () => {
+      const pending = new Subject<JmsQueueDto[]>();
+      queueService.getAllQueues.and.returnValue(pending.asObservable());
+
+      build();
+
+      expect(fixture.nativeElement.querySelector('.spinner-border')).toBeTruthy();
+
+      pending.next([queue('1', 'DLQ')]);
+      pending.complete();
+      fixture.detectChanges();
+
+      expect(fixture.nativeElement.querySelector('.spinner-border')).toBeFalsy();
+      expect(fixture.nativeElement.querySelector('table')).toBeTruthy();
     });
   });
 });

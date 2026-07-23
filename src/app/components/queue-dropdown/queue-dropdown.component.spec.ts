@@ -1,21 +1,14 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
-import { of, throwError } from 'rxjs';
+import { of, Subject, throwError } from 'rxjs';
 
 import { QueueDropdownComponent } from './queue-dropdown.component';
-import { QueueService, JolokiaResponse } from '../../services/queue.service';
+import { QueueService } from '../../services/queue.service';
 import { QueueSelectionService } from '../../services/queue-selection.service';
 import { ToastService } from '../../services/toast.service';
 
 const QUEUES = ['DLQ', 'orders.queue'];
-
-const jolokia = (value: string[]): JolokiaResponse<string[]> => ({
-  request: { type: 'read' },
-  value,
-  timestamp: 0,
-  status: 200
-});
 
 describe('QueueDropdownComponent', () => {
   let component: QueueDropdownComponent;
@@ -33,7 +26,7 @@ describe('QueueDropdownComponent', () => {
       'success', 'error', 'info', 'warning', 'apiError'
     ]);
 
-    queueService.fetchAllQueueNames.and.returnValue(of(jolokia(QUEUES)));
+    queueService.fetchAllQueueNames.and.returnValue(of(QUEUES));
     queueService.getLastUsedQueue.and.returnValue(of(''));
     queueService.saveLastUsedQueue.and.returnValue(of(void 0));
 
@@ -52,9 +45,9 @@ describe('QueueDropdownComponent', () => {
   });
 
   describe('loading queue names', () => {
-    // The Jolokia endpoints wrap their payload in a JMX envelope; the names are in
-    // `value`, not the response body itself.
-    it('reads the names out of the Jolokia envelope', () => {
+    // The envelope-vs-bare-array question lives in QueueService now (see
+    // queue.service.spec.ts); this component just receives plain names.
+    it('loads the queue names', () => {
       fixture.detectChanges();
 
       expect(component.queues).toEqual(QUEUES);
@@ -69,7 +62,37 @@ describe('QueueDropdownComponent', () => {
 
       expect(toast.apiError).toHaveBeenCalled();
       expect(component.queues).toEqual([]);
+      expect(component.isLoading).toBeFalse();
       expect(queueService.getLastUsedQueue).not.toHaveBeenCalled();
+    });
+
+    // NgModel applies a [disabled] binding in a microtask, hence fakeAsync/tick.
+    it('disables the select with a placeholder while loading', fakeAsync(() => {
+      const pending = new Subject<string[]>();
+      queueService.fetchAllQueueNames.and.returnValue(pending.asObservable());
+
+      fixture.detectChanges();
+      tick();
+
+      const select: HTMLSelectElement = fixture.nativeElement.querySelector('select');
+      expect(select.disabled).toBeTrue();
+      expect(select.textContent).toContain('Loading queues…');
+
+      pending.next(QUEUES);
+      pending.complete();
+      fixture.detectChanges();
+      tick();
+
+      expect(select.disabled).toBeFalse();
+      expect(select.textContent).not.toContain('Loading queues…');
+    }));
+
+    it('notes when the broker has no queues at all', () => {
+      queueService.fetchAllQueueNames.and.returnValue(of([]));
+
+      fixture.detectChanges();
+
+      expect(fixture.nativeElement.textContent).toContain('No queues available');
     });
   });
 
@@ -105,6 +128,20 @@ describe('QueueDropdownComponent', () => {
       expect(toast.warning).not.toHaveBeenCalled();
       expect(toast.error).not.toHaveBeenCalled();
       expect(toast.apiError).not.toHaveBeenCalled();
+    });
+
+    // A selection that already exists came from the route — a deep link or returning
+    // from the detail view. The stored preference must not override it: restoring over
+    // the route queue silently showed the wrong queue's messages (found 2026-07-23,
+    // Phase 5 manual pass — both DLQ and ExpiryQueue rendered testQueue's rows).
+    it('leaves a route-driven selection alone', () => {
+      selection.setSelectedQueue('route.queue');
+      queueService.getLastUsedQueue.and.returnValue(of('orders.queue'));
+
+      fixture.detectChanges();
+
+      expect(selection.getSelectedQueue()).toBe('route.queue');
+      expect(component.selectedQueue).toBe('route.queue');
     });
 
     // Since absence is not an error, an error here is a genuine fault (Redis down,

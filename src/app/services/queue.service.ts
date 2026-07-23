@@ -8,19 +8,6 @@ export interface JmsQueueDto {
   messageCount: number;
 }
 
-export interface JolokiaResponse<T> {
-  request: RequestDetails;
-  value: T;
-  timestamp: number;
-  status: number;
-}
-
-export interface RequestDetails {
-  type: string;
-  mbean?: string;
-  attribute?: string;
-}
-
 @Injectable({
   providedIn: 'root'
 })
@@ -37,8 +24,8 @@ export class QueueService {
     return this.http.get<JmsQueueDto[]>(`${this.baseUrl}/artemis-jolokia`);
   }
 
-  fetchAllQueueNames(): Observable<JolokiaResponse<string[]>> {
-    return this.http.get<JolokiaResponse<string[]>>(`${this.baseUrl}/artemis-jolokia/names`);
+  fetchAllQueueNames(): Observable<string[]> {
+    return this.http.get<string[]>(`${this.baseUrl}/artemis-jolokia/names`);
   }
 
   /**

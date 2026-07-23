@@ -6,12 +6,17 @@
         <select
           id="queueSelect"
           class="form-select"
+          [disabled]="isLoading"
           [(ngModel)]="selectedQueue"
           (ngModelChange)="onQueueSelect($event)">
+          <option *ngIf="isLoading" [ngValue]="null" disabled>Loading queues…</option>
           <option *ngFor="let queue of queues" [value]="queue">
             {{ queue }}
           </option>
         </select>
+        <div *ngIf="!isLoading && queues.length === 0" class="form-text text-muted">
+          No queues available
+        </div>
       </div>
     </div>
   </div>

@@ -1,10 +1,11 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ActivatedRoute, Router } from '@angular/router';
-import { of, throwError } from 'rxjs';
+import { of, Subject, throwError } from 'rxjs';
 
 import { MessageDetailComponent } from './message-detail.component';
 import { ConfirmationModalComponent } from '../confirmation-modal/confirmation-modal.component';
+import { PrettyPayloadPipe } from '../../shared/pipes/pretty-payload.pipe';
 import { MessageService } from '../../services/message.service';
 import { ToastService } from '../../services/toast.service';
 import { JmsMessage } from '../../shared/models/jms-message.model';
@@ -35,14 +36,15 @@ describe('MessageDetailComponent', () => {
       'getMessage', 'resendMessage', 'deleteMessage', 'moveToDLQ'
     ]);
     toast = jasmine.createSpyObj<ToastService>('ToastService', [
-      'success', 'error', 'info', 'warning', 'apiError'
+      'success', 'error', 'info', 'warning', 'apiError', 'describeApiError'
     ]);
+    toast.describeApiError.and.returnValue('described error');
     router = jasmine.createSpyObj<Router>('Router', ['navigate']);
 
     messageService.getMessage.and.returnValue(of(aMessage));
 
     TestBed.configureTestingModule({
-      declarations: [MessageDetailComponent, ConfirmationModalComponent],
+      declarations: [MessageDetailComponent, ConfirmationModalComponent, PrettyPayloadPipe],
       providers: [
         { provide: MessageService, useValue: messageService },
         { provide: ToastService, useValue: toast },
@@ -83,20 +85,62 @@ describe('MessageDetailComponent', () => {
       expect(router.navigate).toHaveBeenCalledWith(['/messages', QUEUE]);
     });
 
-    it('reports a failed load without navigating away', () => {
+    // A failed load used to leave a blank page: the whole view is gated on message,
+    // and the only report was a vanishing toast.
+    it('renders a failed load inline with a way back, without navigating away', () => {
       messageService.getMessage.and.returnValue(
         throwError(() => new HttpErrorResponse({ status: 502 }))
       );
 
       fixture.detectChanges();
 
-      expect(toast.apiError).toHaveBeenCalled();
+      expect(toast.apiError).not.toHaveBeenCalled();
+      expect(component.loadError).toBe('described error');
       expect(router.navigate).not.toHaveBeenCalled();
+
+      const alert = fixture.nativeElement.querySelector('.alert-danger');
+      expect(alert?.textContent).toContain('described error');
+
+      const back: HTMLButtonElement = fixture.nativeElement.querySelector('.btn-secondary');
+      back.click();
+      expect(router.navigate).toHaveBeenCalledWith(['/messages', QUEUE]);
+    });
+
+    it('shows a spinner while the load is pending and hides it after', () => {
+      const pending = new Subject<JmsMessage>();
+      messageService.getMessage.and.returnValue(pending.asObservable());
+
+      fixture.detectChanges();
+      expect(fixture.nativeElement.querySelector('.spinner-border')).toBeTruthy();
+
+      pending.next(aMessage);
+      pending.complete();
+      fixture.detectChanges();
+
+      expect(fixture.nativeElement.querySelector('.spinner-border')).toBeFalsy();
+      expect(fixture.nativeElement.textContent).toContain('Message Detail');
     });
   });
 
   describe('resend', () => {
     beforeEach(() => fixture.detectChanges());
+
+    it('asks for confirmation before resending anything', () => {
+      component.showResendConfirm();
+
+      expect(component.confirm.visible).toBeTrue();
+      expect(messageService.resendMessage).not.toHaveBeenCalled();
+    });
+
+    it('resends once confirmed', () => {
+      messageService.resendMessage.and.returnValue(of(ok));
+
+      component.showResendConfirm();
+      component.confirm.handler!();
+
+      expect(messageService.resendMessage).toHaveBeenCalledWith(QUEUE, MESSAGE_ID);
+      expect(component.confirm.visible).toBeFalse();
+    });
 
     it('reports success and clears the spinner', () => {
       messageService.resendMessage.and.returnValue(of(ok));
@@ -200,13 +244,19 @@ describe('MessageDetailComponent', () => {
   describe('destructive buttons', () => {
     // Regression guard: these buttons previously called onDeleteConfirmed/onDLQConfirmed
     // directly, so the modal never opened and neither action was ever confirmed.
-    it('route delete and DLQ through the confirmation modal', () => {
+    it('route resend, delete and DLQ through the confirmation modal', () => {
       fixture.detectChanges();
 
       const buttons: HTMLButtonElement[] =
         Array.from(fixture.nativeElement.querySelectorAll('button'));
       const byText = (label: string) =>
         buttons.find((b) => b.textContent?.trim().startsWith(label))!;
+
+      byText('Resend').click();
+      expect(component.confirm.visible).toBeTrue();
+      expect(messageService.resendMessage).not.toHaveBeenCalled();
+
+      component.confirm.visible = false;
 
       byText('Delete').click();
       expect(component.confirm.visible).toBeTrue();
