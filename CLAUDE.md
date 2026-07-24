@@ -44,10 +44,10 @@ on a queue, view a message, and resend / delete / move-to-DLQ it.
 
 - `MessageService` — CRUD against `http://localhost:8080/api/messages/queue/{queue}/message/{id}`
   plus `/resend` and `/move-to-dlq` sub-paths. Queue names are `encodeURIComponent`-ed.
-- `QueueService` — `http://localhost:8080/api/queues`. Three ways to list queues, reflecting two
-  backend strategies: `artemis-straight` (direct), `artemis-jolokia`, and
-  `artemis-jolokia/names`. All three return plain JSON arrays — the Jolokia JMX envelope
-  that `/names` used to pass through is unwrapped server-side since 2026-07-23.
+- `QueueService` — `http://localhost:8080/api/queues`. One queue-discovery call,
+  `artemis-jolokia/names`, returning a plain JSON array of names — the Jolokia JMX envelope
+  it used to pass through is unwrapped server-side since 2026-07-23. (Two dead discovery
+  calls, `artemis-straight` and `artemis-jolokia`, were deleted 2026-07-24.)
 - `QueueSelectionService` — a `BehaviorSubject<string | null>` that is the single source of truth
   for "which queue am I looking at". `QueueDropdownComponent` writes to it; `MessageListComponent`
   subscribes and refetches on every emission. This is the main cross-component wiring — changing
@@ -105,8 +105,4 @@ dependency only for its theming in `styles.scss`). TypeScript is in `strict` mod
   `selectedQueue$` never fires. The list runs entirely off the text input. Its specs exist and
   pass. Mounting it is Phase 4 work — and it is why the `/last-used/` bug went unnoticed for
   three phases.
-- **Two of the three queue-discovery endpoints return `[]` unconditionally**
-  (`artemis-straight`, `artemis-jolokia`); only `artemis-jolokia/names` works. `QueueListComponent`
-  renders all three, so two of its tables are permanently empty. Whether to fix or delete them is
-  an open decision in the plan — do not "fix" the UI side.
 - Backend base URLs are hardcoded in the services; there are no `src/environments/` files.

@@ -19,8 +19,7 @@ describe('QueueDropdownComponent', () => {
 
   beforeEach(() => {
     queueService = jasmine.createSpyObj<QueueService>('QueueService', [
-      'getAllQueues', 'fetchAllQueues', 'fetchAllQueueNames',
-      'getLastUsedQueue', 'saveLastUsedQueue'
+      'fetchAllQueueNames', 'getLastUsedQueue', 'saveLastUsedQueue'
     ]);
     toast = jasmine.createSpyObj<ToastService>('ToastService', [
       'success', 'error', 'info', 'warning', 'apiError'

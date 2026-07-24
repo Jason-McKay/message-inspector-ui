@@ -2,12 +2,6 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 
-export interface JmsQueueDto {
-  queueId: string;
-  queueName: string;
-  messageCount: number;
-}
-
 @Injectable({
   providedIn: 'root'
 })
@@ -15,14 +9,6 @@ export class QueueService {
   private baseUrl = 'http://localhost:8080/api/queues'; // Update if your backend is running elsewhere
 
   constructor(private http: HttpClient) {}
-
-  getAllQueues(): Observable<JmsQueueDto[]> {
-    return this.http.get<JmsQueueDto[]>(`${this.baseUrl}/artemis-straight`);
-  }
-
-  fetchAllQueues(): Observable<JmsQueueDto[]> {
-    return this.http.get<JmsQueueDto[]>(`${this.baseUrl}/artemis-jolokia`);
-  }
 
   fetchAllQueueNames(): Observable<string[]> {
     return this.http.get<string[]>(`${this.baseUrl}/artemis-jolokia/names`);
