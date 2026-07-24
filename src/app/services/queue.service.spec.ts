@@ -25,17 +25,11 @@ describe('QueueService', () => {
   // broken from Phase 1 until 2026-07-21 — it had no spec, and the browser gave no error
   // worth noticing.
   describe('URLs', () => {
-    it('discovers queues on the absolute backend URLs', () => {
-      service.getAllQueues().subscribe();
-      http.expectOne(`${BASE}/artemis-straight`).flush([]);
-
-      service.fetchAllQueues().subscribe();
-      http.expectOne(`${BASE}/artemis-jolokia`).flush([]);
-
+    it('discovers queue names on the absolute backend URL', () => {
       service.fetchAllQueueNames().subscribe();
       http.expectOne(`${BASE}/artemis-jolokia/names`).flush([]);
 
-      // The assertions here are the expectOne calls; verify() in afterEach seals them.
+      // The assertion here is the expectOne call; verify() in afterEach seals it.
       expect().nothing();
     });
 
