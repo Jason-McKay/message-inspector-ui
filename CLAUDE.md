@@ -2,12 +2,8 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-> Note: the parent directory `C:\Users\jason\Claude` has a CLAUDE.md describing itself as a
-> non-code scratch space. This subdirectory is a real Angular project and is the exception —
-> this file takes precedence here.
-
-**Read the roadmap first: `C:\Users\jason\Claude\message-inspector-plan.md`** — the phased
-plan shared with the backend repo (`C:\Users\jason\Claude\message-inspector\`, which links
+**Read the roadmap first: `C:\Users\jason\Claude\plans\message-inspector-completion-plan.md`** — the phased
+plan shared with the backend repo (`C:\Users\jason\Projects\message-inspector\`, which links
 the same file). It carries a `▶ CURRENT POSITION` block at the top and is the source of
 truth for what is done, what is deliberately deferred, and the known gaps in both halves.
 Frontend work is recorded there too, not just backend.
