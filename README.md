@@ -1,5 +1,7 @@
 # Message Inspector — UI
 
+[![CI](https://github.com/Jason-McKay/message-inspector-ui/actions/workflows/ci.yml/badge.svg)](https://github.com/Jason-McKay/message-inspector-ui/actions/workflows/ci.yml)
+
 An Angular 16 front end for inspecting **ActiveMQ Artemis JMS queues**: pick a queue, browse
 its messages, view one (with pretty-printed JSON/XML payloads), and resend / delete / move
 it to a dead-letter queue. It talks to the
@@ -62,6 +64,10 @@ The suite is behavioural, not smoke-only: it runs against jasmine-spied services
 and HTTP-level failure. Destructive actions carry template-level specs that click the
 rendered button — a regression guard, because the bug they prevent (wiring a button straight
 to the service, bypassing the confirm modal) passes a spec that calls the handler directly.
+
+This exact command runs on every push/PR in CI
+([`.github/workflows/ci.yml`](.github/workflows/ci.yml)), on **Node 20.11.1** (pinned in
+`.nvmrc`; Angular 16 rejects Node 24) followed by a production `npm run build`.
 
 ## Patterns worth knowing before you touch a service call
 

@@ -28,6 +28,11 @@ or filter in the Karma browser UI. For a single non-watch run:
 
 There is no linter configured and no e2e setup.
 
+**CI** (`.github/workflows/ci.yml`, Phase 7): on push/PR to `master`, `npm ci` → the
+headless test command above → `npm run build`. Node is pinned to **20.11.1** via `.nvmrc`
+(Angular 16 rejects Node 24), read by the workflow through `node-version-file`. ubuntu-latest
+ships Google Chrome for the ChromeHeadless run.
+
 ## Architecture
 
 Angular 16 **NgModule** app (not standalone components) — everything is declared in
