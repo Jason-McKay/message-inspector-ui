@@ -1,39 +1,25 @@
+// Bootstrap is compiled from source here rather than pulled in as prebuilt CSS through
+// angular.json, so that styles/_tokens.scss can override its variables before they are
+// used. Order matters: `functions` first (the overrides use Bootstrap's colour helpers),
+// then the tokens, then Bootstrap itself. The bare "bootstrap/..." paths resolve through
+// stylePreprocessorOptions.includePaths in angular.json.
+@import "bootstrap/scss/functions";
+@import "styles/tokens";
+@import "bootstrap/scss/bootstrap";
 
-// Custom Theming for Angular Material
-// For more information: https://material.angular.io/guide/theming
-@use '@angular/material' as mat;
-// Plus imports for other components in your app.
+// ngx-toastr's own toastr.css hardcodes its palette (#51A351 for success and friends),
+// which has nothing to do with the tokens above. This variant renders toasts as Bootstrap
+// alerts instead, deriving them from $success/$danger/$warning/$info -- so it has to come
+// after Bootstrap, whose shift-color() and $alert-* it uses.
+@import "ngx-toastr/toastr-bs5-alert";
 
-// Include the common styles for Angular Material. We include this here so that you only
-// have to load a single css file for Angular Material in your app.
-// Be sure that you only ever include this mixin once!
-@include mat.core();
+// The navbar is in normal flow, not fixed, so nothing reserves space for it: a toast at
+// the stylesheet's default top: 12px lands squarely on "Log out". Clear the navbar.
+.toast-top-right {
+  top: 4.5rem;
+}
 
-// Define the palettes for your theme using the Material Design palettes available in palette.scss
-// (imported above). For each palette, you can optionally specify a default, lighter, and darker
-// hue. Available color palettes: https://material.io/design/color/
-$message-inspector-ui-primary: mat.define-palette(mat.$indigo-palette);
-$message-inspector-ui-accent: mat.define-palette(mat.$pink-palette, A200, A100, A400);
-
-// The warn palette is optional (defaults to red).
-$message-inspector-ui-warn: mat.define-palette(mat.$red-palette);
-
-// Create the theme object. A theme consists of configurations for individual
-// theming systems such as "color" or "typography".
-$message-inspector-ui-theme: mat.define-light-theme((
-  color: (
-    primary: $message-inspector-ui-primary,
-    accent: $message-inspector-ui-accent,
-    warn: $message-inspector-ui-warn,
-  )
-));
-
-// Include theme styles for core and each component used in your app.
-// Alternatively, you can import and @include the theme mixins for each component
-// that you are using.
-@include mat.all-component-themes($message-inspector-ui-theme);
-
-/* You can add global styles to this file, and also import other style files */
-
-html, body { height: 100%; }
-body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
+html,
+body {
+  height: 100%;
+}

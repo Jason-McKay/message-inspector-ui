@@ -1,14 +1,16 @@
+// Surfaces come from the theme (src/styles/_tokens.scss) via Bootstrap's CSS variables
+// rather than fixed hexes, so retuning the neutrals there carries through to these blocks.
 .details {
   margin-bottom: 2rem;
-  background-color: #f5f5f5;
+  background-color: var(--bs-secondary-bg);
   padding: 1rem;
-  border-radius: 5px;
+  border-radius: var(--bs-border-radius);
 }
 
 .payload {
-  background-color: #eaeaea;
+  background-color: var(--bs-gray-300);
   padding: 1rem;
-  border-radius: 5px;
+  border-radius: var(--bs-border-radius);
   white-space: pre-wrap;
   word-break: break-word;
 }

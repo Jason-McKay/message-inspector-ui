@@ -9,19 +9,21 @@
     <div *ngIf="!loading && !error && queueNamesJolokia.length === 0" class="alert alert-info">
       No queues found.
     </div>
-    <div class="table-responsive" *ngIf="!loading && queueNamesJolokia.length">
-      <table class="table table-striped table-bordered">
-        <thead>
-        <tr>
-          <th>Queue Name</th>
-        </tr>
-        </thead>
-        <tbody>
-        <tr *ngFor="let queue of queueNamesJolokia">
-          <td>{{ queue }}</td>
-        </tr>
-        </tbody>
-      </table>
+    <div class="card" *ngIf="!loading && queueNamesJolokia.length">
+      <div class="table-responsive">
+        <table class="table table-striped mb-0">
+          <thead>
+          <tr>
+            <th>Queue Name</th>
+          </tr>
+          </thead>
+          <tbody>
+          <tr *ngFor="let queue of queueNamesJolokia">
+            <td>{{ queue }}</td>
+          </tr>
+          </tbody>
+        </table>
+      </div>
     </div>
   </section>
 </div>

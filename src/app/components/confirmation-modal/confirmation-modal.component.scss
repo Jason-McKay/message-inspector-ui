@@ -13,9 +13,9 @@
 }
 
 .confirm-dialog {
-  background: white;
+  background: rgb(var(--bs-white-rgb));
   padding: 1.5rem;
-  border-radius: 8px;
+  border-radius: var(--bs-border-radius-lg);
   width: min(90vw, 320px);
   text-align: center;
 
