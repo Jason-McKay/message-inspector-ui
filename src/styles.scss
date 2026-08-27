@@ -1,11 +1,13 @@
-/* Global styles. Bootstrap and ngx-toastr are loaded through angular.json's styles array. */
+// Bootstrap is compiled from source here rather than pulled in as prebuilt CSS through
+// angular.json, so that styles/_tokens.scss can override its variables before they are
+// used. Order matters: `functions` first (the overrides use Bootstrap's colour helpers),
+// then the tokens, then Bootstrap itself. The bare "bootstrap/..." paths resolve through
+// stylePreprocessorOptions.includePaths in angular.json.
+@import "bootstrap/scss/functions";
+@import "styles/tokens";
+@import "bootstrap/scss/bootstrap";
 
 html,
 body {
   height: 100%;
-}
-
-body {
-  margin: 0;
-  font-family: Roboto, "Helvetica Neue", sans-serif;
 }
