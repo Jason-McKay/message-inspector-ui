@@ -7,6 +7,18 @@
 @import "styles/tokens";
 @import "bootstrap/scss/bootstrap";
 
+// ngx-toastr's own toastr.css hardcodes its palette (#51A351 for success and friends),
+// which has nothing to do with the tokens above. This variant renders toasts as Bootstrap
+// alerts instead, deriving them from $success/$danger/$warning/$info -- so it has to come
+// after Bootstrap, whose shift-color() and $alert-* it uses.
+@import "ngx-toastr/toastr-bs5-alert";
+
+// The navbar is in normal flow, not fixed, so nothing reserves space for it: a toast at
+// the stylesheet's default top: 12px lands squarely on "Log out". Clear the navbar.
+.toast-top-right {
+  top: 4.5rem;
+}
+
 html,
 body {
   height: 100%;
