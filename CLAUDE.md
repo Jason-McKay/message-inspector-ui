@@ -72,9 +72,14 @@ Destructive actions there go through `showDeleteConfirm()` / `showDLQConfirm()`,
 straight to `onDeleteConfirmed()` / `onDLQConfirmed()` — a spec guards this, because the
 template previously called the latter and the modal never opened.
 
-**Styling:** Bootstrap 5 (global, via `angular.json` styles), SCSS per-component. No Angular
-Material modules are imported — all UI is Bootstrap markup (`@angular/material` remains a
-dependency only for its theming in `styles.scss`). TypeScript is in `strict` mode with `strictTemplates`.
+**Styling:** Bootstrap 5, **compiled from source** in `src/styles.scss` rather than pulled in as
+prebuilt CSS, so `src/styles/_tokens.scss` can override its `!default` variables before they are
+used. The import order there is load-bearing: `bootstrap/scss/functions`, then the tokens, then
+`bootstrap/scss/bootstrap`. The bare `bootstrap/...` paths resolve through
+`stylePreprocessorOptions.includePaths` in `angular.json` — set on the **build and test builders
+both**, or the suite fails to compile while the app builds fine. Per-component SCSS on top of that.
+Angular Material is gone entirely, dependency included — all UI is Bootstrap markup. TypeScript is
+in `strict` mode with `strictTemplates`.
 
 ## Gotchas
 
