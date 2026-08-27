@@ -46,6 +46,9 @@ $body-color: $gray-900;
 // Components
 $table-cell-padding-y: 0.75rem;
 $table-border-color:   $gray-300;
+// Bootstrap 5.3 defaults $card-bg to var(--bs-body-bg), which with the tinted $body-bg
+// above would paint every card the same colour as the page it sits on.
+$card-bg:              $white;
 $card-border-color:    $gray-300;
 $card-cap-bg:          $gray-100;
 $input-border-color:   $gray-400;

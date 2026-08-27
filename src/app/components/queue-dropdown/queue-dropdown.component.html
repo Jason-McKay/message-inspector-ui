@@ -1,23 +1,19 @@
-<div class="container mt-3">
-  <div class="row">
-    <div class="col-md-6">
-      <div class="mb-3">
-        <label for="queueSelect" class="form-label">Select a queue:</label>
-        <select
-          id="queueSelect"
-          class="form-select"
-          [disabled]="isLoading"
-          [(ngModel)]="selectedQueue"
-          (ngModelChange)="onQueueSelect($event)">
-          <option *ngIf="isLoading" [ngValue]="null" disabled>Loading queues…</option>
-          <option *ngFor="let queue of queues" [value]="queue">
-            {{ queue }}
-          </option>
-        </select>
-        <div *ngIf="!isLoading && queues.length === 0" class="form-text text-muted">
-          No queues available
-        </div>
-      </div>
-    </div>
+<!-- No layout wrapper of its own: the component is a form fragment and takes the width and
+     spacing of whatever card or column it is mounted in. -->
+<div class="mb-3">
+  <label for="queueSelect" class="form-label">Select a queue:</label>
+  <select
+    id="queueSelect"
+    class="form-select"
+    [disabled]="isLoading"
+    [(ngModel)]="selectedQueue"
+    (ngModelChange)="onQueueSelect($event)">
+    <option *ngIf="isLoading" [ngValue]="null" disabled>Loading queues…</option>
+    <option *ngFor="let queue of queues" [value]="queue">
+      {{ queue }}
+    </option>
+  </select>
+  <div *ngIf="!isLoading && queues.length === 0" class="form-text text-muted">
+    No queues available
   </div>
 </div>
