@@ -6,7 +6,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 plan shared with the backend repo (`C:\Users\jason\Projects\message-inspector\`, which links
 the same file). It carries a `▶ CURRENT POSITION` block at the top and is the source of
 truth for what is done, what is deliberately deferred, and the known gaps in both halves.
-Frontend work is recorded there too, not just backend.
+Frontend work is recorded there too, not just backend. Phases 0–7 are complete, so trust that
+block over any phase numbering left behind in code comments.
 
 ## Commands
 
@@ -38,8 +39,28 @@ Angular 16 **NgModule** app (not standalone components) — everything is declar
 **Domain:** a browser UI for inspecting ActiveMQ Artemis JMS queues — list queues, list messages
 on a queue, view a message, and resend / delete / move-to-DLQ it.
 
-**Routes** (`app-routing.module.ts`): `/messages` (list), `/messages/:queueName/:messageId`
-(detail), `/queues` (diagnostic view). `/` redirects to `/messages`.
+**Auth — the whole app is gated.** `/login` is the only route reachable without a session.
+
+- `AuthService` — POSTs to `.../api/auth/login` and keeps `{token, username, roles}` in
+  `sessionStorage` under the key `mi.auth`. Deliberate trade-off: a refresh within the tab stays
+  signed in, closing the tab signs out. That is only safe because the token is short-lived
+  (~1h server-side) and a 401 bounces to login; the hardened alternative (in-memory token plus a
+  refresh endpoint) is deliberately deferred. A corrupt entry reads as "no session" rather than
+  throwing out of every getter.
+- `authGuard` (`services/auth.guard.ts`) — a functional `CanActivateFn` that returns a `UrlTree`
+  for `/login` instead of calling `navigate()`, so the Router cancels the original navigation and
+  redirects in one step.
+- `AuthInterceptor` — registered in `AppModule` through `HTTP_INTERCEPTORS`. Attaches the bearer
+  token only to URLs starting with `http://localhost:8080/api`, and skips the login call itself.
+  A 401 on anything else clears the session and navigates to `/login` — that is what makes an
+  expired token self-correct.
+
+**Routes** (`app-routing.module.ts`): `/login` (ungated), `/messages` (list),
+`/messages/:queueName` (list, deep-linked to one queue), `/messages/:queueName/:messageId`
+(detail), `/queues` (diagnostic view). `/` redirects to `/messages`. Every route except `/login`
+carries `canActivate: [authGuard]`. `/messages/:queueName` is also the return target from the
+detail view (Back, and after a delete/DLQ) — without it those navigations fail with NG04002 and
+leave the user on a stale page.
 
 **Services** (all `providedIn: 'root'`):
 
@@ -48,14 +69,17 @@ on a queue, view a message, and resend / delete / move-to-DLQ it.
 - `QueueService` — `http://localhost:8080/api/queues`. One queue-discovery call,
   `artemis-jolokia/names`, returning a plain JSON array of names — the Jolokia JMX envelope
   it used to pass through is unwrapped server-side since 2026-07-23. (Two dead discovery
-  calls, `artemis-straight` and `artemis-jolokia`, were deleted 2026-07-24.)
+  calls, `artemis-straight` and `artemis-jolokia`, were deleted 2026-07-24.) `last-used`
+  (GET as text, POST as `text/plain`) stores the signed-in user's queue preference — there is
+  **no user id in the path**, the bearer token identifies them server-side.
 - `QueueSelectionService` — a `BehaviorSubject<string | null>` that is the single source of truth
-  for "which queue am I looking at". `QueueDropdownComponent` writes to it; `MessageListComponent`
-  subscribes and refetches on every emission. This is the main cross-component wiring — changing
-  the selected queue anywhere drives the message list.
+  for "which queue am I looking at". `QueueDropdownComponent` and a deep-linked route write to it;
+  `MessageListComponent` subscribes and refetches on every emission. This is the main
+  cross-component wiring — changing the selected queue anywhere drives the message list.
 - `ToastService` — wrapper over `ngx-toastr`; use it rather than injecting `ToastrService`.
   `apiError(err, fallback)` is the single place HTTP failures become user-facing text: it
   prefers the server's own `message`, and only invents one when that is absent.
+  `describeApiError(err, fallback)` is the same mapping *returned* rather than shown.
 
 **The response contract — read this before touching any service call.** The mutating
 endpoints (resend / delete / move-to-dlq) return **HTTP 200 even when the operation
@@ -65,12 +89,27 @@ Observable `next` therefore does *not* mean the call worked — every caller mus
 rejected message ID, **502** when the broker is unavailable, **500** otherwise, all with
 the same body shape. Both halves have to be handled; neither one alone is sufficient.
 
+**Errors: inline vs. toast** is a convention, not incidental. *Load* failures render inline via
+`describeApiError` (the `loadError` / `error` fields in the list, detail and queue views) — a
+toast over a silently stale table vanished and left no sign the load had failed, and a failed
+detail load left a blank page. *Mutations* keep their toasts.
+
 **Components** under `src/app/components/`. `MessageDetailComponent` owns its own confirmation
 flow via a `confirm: {visible, action, handler}` object bound to the shared
 `ConfirmationModalComponent` (a plain `@Input`/`@Output` component, not a Material dialog).
 Destructive actions there go through `showDeleteConfirm()` / `showDLQConfirm()`, never
 straight to `onDeleteConfirmed()` / `onDLQConfirmed()` — a spec guards this, because the
-template previously called the latter and the modal never opened.
+template previously called the latter and the modal never opened. `MessageListComponent` carries
+the same confirm shape for its per-row actions, and mounts `<app-queue-dropdown>`
+(`message-list.component.html:12`) — that mounting is what gives `QueueSelectionService` a
+writer. The list also still accepts a queue typed into its text box.
+
+**Shared** — `shared/models/` holds `JmsMessage` and `ApiResponse`.
+`shared/pipes/pretty-payload.pipe.ts` declares the `prettyPayload` pipe used by the detail view:
+JSON is detected **by parsing, not sniffing**; XML goes through `DOMParser`, which reports failure
+as a `<parsererror>` document rather than throwing; anything that does not parse is returned
+untouched. It is a pure pipe, so the parse runs once per payload rather than per
+change-detection cycle.
 
 **Styling:** Bootstrap 5, **compiled from source** in `src/styles.scss` rather than pulled in as
 prebuilt CSS, so `src/styles/_tokens.scss` can override its `!default` variables before they are
@@ -81,6 +120,10 @@ both**, or the suite fails to compile while the app builds fine. Per-component S
 Angular Material is gone entirely, dependency included — all UI is Bootstrap markup. TypeScript is
 in `strict` mode with `strictTemplates`.
 
+**Tests** are behavioural, not smoke-only, and run against **jasmine-spied services rather than
+`HttpClientTestingModule`** — each component is covered for success, body-level failure
+(`success: false` on a 200) and HTTP-level failure. Match that style when adding specs.
+
 ## Gotchas
 
 - **Every service URL must be absolute to `:8080`.** There is no `proxy.conf.json`, so a relative
@@ -88,11 +131,24 @@ in `strict` mode with `strictTemplates`.
   hypothetical: `getLastUsedQueue`/`saveLastUsedQueue` were relative from Phase 1 until
   2026-07-21, so the last-used-queue preference never once worked through the UI. `queue.service.spec.ts`
   now pins the URLs.
-- **No stored preference is an empty 200, not a 404** (see
-  `QueueControllerTest.testGetLastUsedQueue_NoPreferenceReturnsOkWithEmptyBody`). Handle absence in
-  the success path; an error from that endpoint is a genuine fault and gets a warning toast.
-- `QueueDropdownComponent` hardcodes `userId = 'jason'` (Phase 4 replaces this with the
-  authenticated user).
+- **The base URL is hardcoded in two kinds of place** — each service, *and*
+  `AuthInterceptor.API_PREFIX`. Change the services without the interceptor and requests still go
+  out, just unauthenticated: the 401 then clears the session and bounces to `/login`, which reads
+  as a login bug rather than a URL one. There are no `src/environments/` files.
+- **Absence is an empty 200, not a 404 — in more than one place.** No stored queue preference (see
+  `QueueControllerTest.testGetLastUsedQueue_NoPreferenceReturnsOkWithEmptyBody`) and a message that
+  is not on the queue both arrive as 200 with an empty body. Handle absence in the success path
+  (`MessageDetailComponent` checks `!msg.messageId`); an error from those endpoints is a genuine
+  fault.
+- **`AuthService.hasRole()` is called from no component or template.** ADMIN-only actions (delete,
+  move-to-DLQ) are enforced **server-side only** — the buttons render for every signed-in user and
+  a USER discovers the restriction as an error toast. Gate them in the UI before claiming
+  role-based UX.
+- **A deep-linked queue must be published, not fetched.** `MessageListComponent` pushes
+  `:queueName` into `QueueSelectionService` rather than calling `fetchMessages()` directly, so the
+  dropdown displays it and `restoreLastUsedQueue()` sees a selection already exists and stands
+  down. Fetching directly is how the restored preference silently won over the route queue and
+  showed the wrong queue's messages.
 - **Destructive actions go through `ConfirmationModalComponent` in *both* list and detail views.**
   Each has a template-level spec that clicks the rendered button — a spec calling
   `showDeleteConfirm()` directly passes just as happily when the button is rewired straight to
@@ -106,9 +162,3 @@ in `strict` mode with `strictTemplates`.
   asserts this. Component specs mock `Router`, which records a `navigate()` to a URL matching
   nothing without complaint — that is how `/messages/:queueName` came to be missing while four
   navigations were dead and the suite stayed green.
-- **`<app-queue-dropdown>` is declared in `AppModule` but rendered in no template**, so
-  `QueueSelectionService` has no writer and `MessageListComponent`'s subscription to
-  `selectedQueue$` never fires. The list runs entirely off the text input. Its specs exist and
-  pass. Mounting it is Phase 4 work — and it is why the `/last-used/` bug went unnoticed for
-  three phases.
-- Backend base URLs are hardcoded in the services; there are no `src/environments/` files.
