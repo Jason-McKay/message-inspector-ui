@@ -2,8 +2,8 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-**Read the roadmap first: `C:\Users\jason\Claude\plans\message-inspector-completion-plan.md`** — the phased
-plan shared with the backend repo (`C:\Users\jason\Projects\message-inspector\`, which links
+**Read the roadmap first** — a local planning doc kept outside the repo, the phased
+plan shared with the backend repo (`message-inspector`, which links
 the same file). It carries a `▶ CURRENT POSITION` block at the top and is the source of
 truth for what is done, what is deliberately deferred, and the known gaps in both halves.
 Frontend work is recorded there too, not just backend. Phases 0–7 are complete, so trust that
