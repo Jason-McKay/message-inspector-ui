@@ -1,0 +1,225 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Message Inspector - mock backend</title>
+<style>
+  :root {
+    --bg: #f6f7f9;
+    --panel: #ffffff;
+    --ink: #1c1e21;
+    --muted: #6b7280;
+    --line: #dfe3e8;
+    --accent: #0d6efd;
+    --ok: #198754;
+    --warn: #b45309;
+    --bad: #dc3545;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #16181c;
+      --panel: #1f2227;
+      --ink: #e6e8eb;
+      --muted: #9aa1ab;
+      --line: #32363d;
+      --accent: #4d94ff;
+      --ok: #3fb27f;
+      --warn: #d99a3a;
+      --bad: #f2626f;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    padding: 24px;
+    background: var(--bg);
+    color: var(--ink);
+    font: 14px/1.5 ui-sans-serif, system-ui, "Segoe UI", Roboto, sans-serif;
+  }
+  h1 { font-size: 18px; margin: 0 0 2px; }
+  h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 0 0 10px; }
+  .sub { color: var(--muted); margin: 0 0 20px; }
+  .wrap { max-width: 1080px; margin: 0 auto; display: grid; gap: 18px; }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 16px; }
+  .row {
+    display: grid;
+    grid-template-columns: minmax(240px, 340px) 1fr;
+    gap: 12px;
+    align-items: center;
+    padding: 8px 0;
+    border-top: 1px solid var(--line);
+  }
+  .row:first-of-type { border-top: 0; }
+  code, .mono { font-family: ui-monospace, "Cascadia Mono", Consolas, monospace; font-size: 12.5px; }
+  .btns { display: flex; flex-wrap: wrap; gap: 6px; }
+  button {
+    font: inherit;
+    font-size: 12.5px;
+    padding: 4px 10px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: transparent;
+    color: var(--ink);
+    cursor: pointer;
+  }
+  button:hover { border-color: var(--accent); }
+  button.on { background: var(--accent); border-color: var(--accent); color: #fff; }
+  button.on.danger { background: var(--bad); border-color: var(--bad); }
+  .controls { display: flex; flex-wrap: wrap; gap: 18px; align-items: center; }
+  label { display: flex; gap: 8px; align-items: center; color: var(--muted); }
+  input[type=number] {
+    width: 84px; font: inherit; padding: 4px 8px;
+    border: 1px solid var(--line); border-radius: 6px;
+    background: var(--bg); color: var(--ink);
+  }
+  .reset { border-color: var(--bad); color: var(--bad); }
+  table { width: 100%; border-collapse: collapse; }
+  th { text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); padding: 4px 8px 8px; }
+  td { padding: 4px 8px; border-top: 1px solid var(--line); vertical-align: top; }
+  .s2 { color: var(--ok); } .s4 { color: var(--warn); } .s5 { color: var(--bad); }
+  .pill { display: inline-block; padding: 0 7px; border: 1px solid var(--line); border-radius: 999px; font-size: 11.5px; color: var(--muted); }
+  .empty { color: var(--muted); padding: 8px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Message Inspector &mdash; mock backend</h1>
+    <p class="sub">Forces each endpoint into the failure the frontend has to survive. Sign in as
+      <code>admin</code>/<code>admin</code> (ADMIN) or <code>jason</code>/<code>jason</code> (USER).</p>
+  </header>
+
+  <section class="card">
+    <h2>Scenarios</h2>
+    <div id="routes"></div>
+  </section>
+
+  <section class="card">
+    <h2>Global</h2>
+    <div class="controls">
+      <label>Latency <input id="latency" type="number" min="0" max="10000" step="100"> ms</label>
+      <label><input id="strict" type="checkbox"> Reject double-encoded paths (container behaviour)</label>
+      <button class="reset" id="reset">Reset fixtures</button>
+      <span id="counts" class="pill"></span>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>Requests <span class="pill" id="logcount"></span></h2>
+    <table>
+      <thead><tr><th style="width:90px">Time</th><th style="width:60px">Method</th><th>Path</th><th style="width:60px">Status</th><th style="width:280px">Note</th></tr></thead>
+      <tbody id="log"></tbody>
+    </table>
+    <div class="empty" id="logempty">No requests yet. Start the app on :4200 and sign in.</div>
+  </section>
+</div>
+
+<script>
+  var current = null;
+
+  function statusClass(status) {
+    if (status < 300) return 's2';
+    if (status < 500) return 's4';
+    return 's5';
+  }
+
+  // A scenario is "dangerous" when it makes the endpoint misbehave, so the active pill
+  // reads red rather than blue and an accidentally-left-on override is obvious.
+  function isFailure(name) {
+    return name !== 'ok';
+  }
+
+  function renderRoutes(data) {
+    var host = document.getElementById('routes');
+    host.innerHTML = '';
+    Object.keys(data.catalogue).forEach(function (route) {
+      var row = document.createElement('div');
+      row.className = 'row';
+
+      var label = document.createElement('code');
+      label.textContent = data.labels[route] || route;
+      row.appendChild(label);
+
+      var btns = document.createElement('div');
+      btns.className = 'btns';
+      data.catalogue[route].forEach(function (name) {
+        var b = document.createElement('button');
+        b.textContent = name;
+        if (data.scenarios[route] === name) {
+          b.className = isFailure(name) ? 'on danger' : 'on';
+        }
+        b.onclick = function () { patch({ route: route, scenario: name }); };
+        btns.appendChild(b);
+      });
+      row.appendChild(btns);
+      host.appendChild(row);
+    });
+  }
+
+  function renderLog(entries) {
+    var body = document.getElementById('log');
+    document.getElementById('logempty').style.display = entries.length ? 'none' : '';
+    document.getElementById('logcount').textContent = entries.length ? entries.length + ' most recent' : '';
+    body.innerHTML = '';
+    entries.forEach(function (e) {
+      var tr = document.createElement('tr');
+      tr.innerHTML =
+        '<td class="mono">' + e.at.slice(11, 19) + '</td>' +
+        '<td class="mono">' + e.method + '</td>' +
+        '<td class="mono">' + escapeHtml(e.path) + '</td>' +
+        '<td class="mono ' + statusClass(e.status) + '">' + e.status + '</td>' +
+        '<td>' + escapeHtml(e.note || '') + '</td>';
+      body.appendChild(tr);
+    });
+  }
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"]/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
+    });
+  }
+
+  function render(data) {
+    current = data;
+    renderRoutes(data);
+    renderLog(data.log);
+
+    var latency = document.getElementById('latency');
+    if (document.activeElement !== latency) {
+      latency.value = data.latencyMs;
+    }
+    document.getElementById('strict').checked = data.strictPaths;
+
+    var total = Object.keys(data.counts).reduce(function (sum, q) { return sum + data.counts[q]; }, 0);
+    document.getElementById('counts').textContent =
+      total + ' messages across ' + Object.keys(data.counts).length + ' queues';
+  }
+
+  function load() {
+    fetch('/__mock/state').then(function (r) { return r.json(); }).then(render).catch(function () {});
+  }
+
+  function patch(body) {
+    fetch('/__mock/state', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    }).then(load);
+  }
+
+  document.getElementById('latency').onchange = function () {
+    patch({ latencyMs: Number(this.value) });
+  };
+  document.getElementById('strict').onchange = function () {
+    patch({ strictPaths: this.checked });
+  };
+  document.getElementById('reset').onclick = function () {
+    fetch('/__mock/reset', { method: 'POST' }).then(load);
+  };
+
+  load();
+  setInterval(load, 1500);
+</script>
+</body>
+</html>

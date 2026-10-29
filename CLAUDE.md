@@ -17,6 +17,7 @@ Angular CLI 16 project (`ng` via `npx ng` or the npm scripts):
 - `npm run build` — production build to `dist/message-inspector-ui`
 - `npm run watch` — incremental development build
 - `npm test` — Karma + Jasmine in a launched Chrome, watch mode
+- `npm run mock` — the mock backend on :8080 in place of the real Spring/Artemis stack
 
 Running a subset of tests: there is no `karma.conf.js` (the CLI karma builder generates the
 config), so use Jasmine focus instead — change `describe`/`it` to `fdescribe`/`fit` in the spec,
@@ -24,6 +25,13 @@ or filter in the Karma browser UI. For a single non-watch run:
 `npx ng test --watch=false --browsers=ChromeHeadless`.
 
 There is no linter configured and no e2e setup.
+
+**Mock backend** (`mock-server/`, its own README): a zero-dependency `node:http` stand-in for
+the Spring/Artemis stack, so the UI runs with no Docker, broker or JVM. `npm run mock` serves
+the real contract on :8080 and a control panel on `/__mock` that forces each endpoint into its
+failure modes — the 200-with-`success:false` envelope, the bodyless 401 and 403, 502, latency
+— none of which are otherwise reachable without breaking a real broker. It is hand-written
+against the backend, so **the backend is the authority whenever the two disagree**.
 
 **CI** (`.github/workflows/ci.yml`, Phase 7): on push/PR to `master`, `npm ci` → the
 headless test command above → `npm run build`. Node is pinned to **20.11.1** via `.nvmrc`
