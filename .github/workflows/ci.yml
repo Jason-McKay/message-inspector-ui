@@ -12,7 +12,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # Node 20.11.1 is pinned (see .nvmrc): Angular 16 rejects Node 24. ubuntu-latest
+      # Node 24.18.0 is pinned (see .nvmrc): Angular 20+ rejects the old 20.11.1 pin. ubuntu-latest
       # ships Google Chrome, which karma-chrome-launcher uses for the ChromeHeadless run.
       - name: Set up Node
         uses: actions/setup-node@v4
