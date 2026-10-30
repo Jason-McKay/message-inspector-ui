@@ -3,7 +3,7 @@ import { Component, EventEmitter, Input, Output, ChangeDetectionStrategy } from 
 /**
  * A plain presentational confirm dialog — an overlay with a message and Yes/Cancel, driven
  * entirely by `@Input`/`@Output` (not a Material dialog). The parent owns the state: it
- * binds `visible`/`actionLabel` and reacts to `confirm`/`cancel`. Destructive actions in
+ * binds `visible`/`actionLabel` and reacts to `confirm`/`cancelled`. Destructive actions in
  * both the list and detail views route through this rather than calling the service
  * directly.
  */
@@ -19,5 +19,5 @@ export class ConfirmationModalComponent {
   @Input() actionLabel = 'Are you sure?';
 
   @Output() confirm = new EventEmitter<void>();
-  @Output() cancel = new EventEmitter<void>();
+  @Output() cancelled = new EventEmitter<void>();
 }

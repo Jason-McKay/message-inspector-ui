@@ -305,6 +305,30 @@ describe('MessageListComponent', () => {
       expect(component.confirm.visible).toBeTrue();
       expect(messageService.moveToDLQ).not.toHaveBeenCalled();
     });
+
+    // Guards the (cancelled) binding on <app-confirmation-modal>. An event name the modal
+    // does not declare still compiles — Angular binds it as a native DOM listener — so a
+    // stale binding would leave Cancel dead with every other spec green.
+    it('closes the confirmation modal from its Cancel button without deleting', () => {
+      messageService.getMessages.and.returnValue(of([message('a')]));
+      fixture.detectChanges();
+      selection.setSelectedQueue(QUEUE);
+      fixture.detectChanges();
+
+      const deleteButton: HTMLButtonElement = Array.from<HTMLButtonElement>(
+        fixture.nativeElement.querySelectorAll('td button')
+      ).find((b) => b.textContent?.trim() === 'Delete')!;
+      deleteButton.click();
+      fixture.detectChanges();
+
+      const cancel: HTMLButtonElement = Array.from<HTMLButtonElement>(
+        fixture.nativeElement.querySelectorAll('app-confirmation-modal button')
+      ).find((b) => b.textContent?.trim() === 'Cancel')!;
+      cancel.click();
+
+      expect(component.confirm.visible).toBeFalse();
+      expect(messageService.deleteMessage).not.toHaveBeenCalled();
+    });
   });
 
   describe('navigation', () => {

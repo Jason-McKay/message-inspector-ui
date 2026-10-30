@@ -20,12 +20,12 @@ import {JmsMessage} from "../../shared/models/jms-message.model";
   standalone: false,
 })
 export class MessageListComponent implements OnInit{
-  queueName: string = '';
+  queueName = '';
   messages: JmsMessage[] = [];
   selectedQueue: string | null = null;
-  hasFetched: boolean = false;
-  isLoading: boolean = false;
-  loadError: string = '';
+  hasFetched = false;
+  isLoading = false;
+  loadError = '';
 
   constructor(private selectionService: QueueSelectionService, private messageService: MessageService, private route: ActivatedRoute, private router: Router, private toast: ToastService) {}
 

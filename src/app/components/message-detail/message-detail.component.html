@@ -79,5 +79,5 @@
   [visible]="confirm.visible"
   [actionLabel]="confirm.action"
   (confirm)="confirm.handler?.()"
-  (cancel)="confirm.visible = false">
+  (cancelled)="confirm.visible = false">
 </app-confirmation-modal>
