@@ -1,6 +1,6 @@
 import { NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
-import { HTTP_INTERCEPTORS, HttpClientModule } from '@angular/common/http';
+import { HTTP_INTERCEPTORS, provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { ToastrModule } from 'ngx-toastr';
@@ -28,7 +28,6 @@ import { PrettyPayloadPipe } from './shared/pipes/pretty-payload.pipe';
     PrettyPayloadPipe
   ],
   imports: [
-    HttpClientModule,
     FormsModule,
     BrowserModule,
     AppRoutingModule,
@@ -36,6 +35,8 @@ import { PrettyPayloadPipe } from './shared/pipes/pretty-payload.pipe';
     ToastrModule.forRoot(),
   ],
   providers: [
+    // withInterceptorsFromDi() is what keeps the class-based HTTP_INTERCEPTORS entry below in the chain.
+    provideHttpClient(withInterceptorsFromDi()),
     // Attaches the bearer token to backend calls and bounces a 401 to /login.
     { provide: HTTP_INTERCEPTORS, useClass: AuthInterceptor, multi: true }
   ],

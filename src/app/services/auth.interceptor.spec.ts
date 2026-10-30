@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
-import { HTTP_INTERCEPTORS, HttpClient } from '@angular/common/http';
-import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { HTTP_INTERCEPTORS, HttpClient, provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { Router } from '@angular/router';
 
 import { AuthInterceptor } from './auth.interceptor';
@@ -20,11 +20,12 @@ describe('AuthInterceptor', () => {
     auth = { token: 'jwt-abc', logout: jasmine.createSpy('logout') };
 
     TestBed.configureTestingModule({
-      imports: [HttpClientTestingModule],
       providers: [
         { provide: AuthService, useValue: auth },
         { provide: Router, useValue: router },
         { provide: HTTP_INTERCEPTORS, useClass: AuthInterceptor, multi: true },
+        provideHttpClient(withInterceptorsFromDi()),
+        provideHttpClientTesting(),
       ],
     });
     http = TestBed.inject(HttpClient);
