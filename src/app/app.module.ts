@@ -2,7 +2,6 @@ import { NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { HTTP_INTERCEPTORS, provideHttpClient, withInterceptorsFromDi, withXhr } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
-import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { ToastrModule } from 'ngx-toastr';
 
 import { AppRoutingModule } from './app-routing.module';
@@ -31,7 +30,6 @@ import { PrettyPayloadPipe } from './shared/pipes/pretty-payload.pipe';
     FormsModule,
     BrowserModule,
     AppRoutingModule,
-    BrowserAnimationsModule,
     ToastrModule.forRoot(),
   ],
   providers: [
