@@ -16,6 +16,7 @@ import {JmsMessage} from "../../shared/models/jms-message.model";
   selector: 'app-message-list',
   templateUrl: './message-list.component.html',
   styleUrls: ['./message-list.component.scss'],
+  standalone: false,
 })
 export class MessageListComponent implements OnInit{
   queueName: string = '';

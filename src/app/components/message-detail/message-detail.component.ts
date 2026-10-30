@@ -15,6 +15,7 @@ import {JmsMessage} from "../../shared/models/jms-message.model";
   selector: 'app-message-detail',
   templateUrl: './message-detail.component.html',
   styleUrls: ['./message-detail.component.scss'],
+  standalone: false,
 })
 export class MessageDetailComponent implements OnInit {
   message: JmsMessage | null = null;

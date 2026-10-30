@@ -13,6 +13,7 @@ import {ToastService} from "../../services/toast.service";
 @Component({
   selector: 'app-queue-dropdown',
   templateUrl: './queue-dropdown.component.html',
+  standalone: false,
 })
 export class QueueDropdownComponent implements OnInit {
   queues: string[] = [];

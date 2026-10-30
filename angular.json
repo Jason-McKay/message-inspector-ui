@@ -27,7 +27,10 @@
             "tsConfig": "tsconfig.app.json",
             "inlineStyleLanguage": "scss",
             "stylePreprocessorOptions": {
-              "includePaths": ["node_modules"]
+              "includePaths": ["node_modules"],
+              "sass": {
+                "silenceDeprecations": ["import"]
+              }
             },
             "assets": [
               "src/favicon.ico",

@@ -11,7 +11,8 @@ import {ToastService} from "../../services/toast.service";
 @Component({
   selector: 'app-queue-list',
   templateUrl: './queue-list.component.html',
-  styleUrls: ['./queue-list.component.scss']
+  styleUrls: ['./queue-list.component.scss'],
+  standalone: false
 })
 export class QueueListComponent implements OnInit {
   queueNamesJolokia: string[] = [];
