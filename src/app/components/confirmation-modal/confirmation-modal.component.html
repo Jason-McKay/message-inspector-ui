@@ -1,12 +1,14 @@
 <!-- Deliberately NOT named .modal-backdrop/.modal-content: those are Bootstrap 5 global
      classes with their own opacity/z-index/background rules, and this component is a
      plain overlay, not a Bootstrap modal. -->
-<div class="confirm-backdrop" *ngIf="visible">
-  <div class="confirm-dialog">
-    <p>{{ actionLabel }}</p>
-    <div class="actions">
-      <button class="btn btn-danger" (click)="confirm.emit()">Yes</button>
-      <button class="btn btn-secondary" (click)="cancel.emit()">Cancel</button>
+@if (visible) {
+  <div class="confirm-backdrop">
+    <div class="confirm-dialog">
+      <p>{{ actionLabel }}</p>
+      <div class="actions">
+        <button class="btn btn-danger" (click)="confirm.emit()">Yes</button>
+        <button class="btn btn-secondary" (click)="cancel.emit()">Cancel</button>
+      </div>
     </div>
   </div>
-</div>
+}

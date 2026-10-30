@@ -1,63 +1,78 @@
-<div *ngIf="isLoading" class="text-center my-4">
-  <div class="spinner-border text-primary" role="status">
-    <span class="visually-hidden">Loading message…</span>
+@if (isLoading) {
+  <div class="text-center my-4">
+    <div class="spinner-border text-primary" role="status">
+      <span class="visually-hidden">Loading message…</span>
+    </div>
   </div>
-</div>
+}
 
 <!-- A failed load used to be a blank page: the whole view is gated on message. -->
-<div class="container mt-4" *ngIf="!isLoading && loadError">
-  <div class="alert alert-danger">{{ loadError }}</div>
-  <button class="btn btn-secondary" (click)="goBack()">← Back to List</button>
-</div>
+@if (!isLoading && loadError) {
+  <div class="container mt-4">
+    <div class="alert alert-danger">{{ loadError }}</div>
+    <button class="btn btn-secondary" (click)="goBack()">← Back to List</button>
+  </div>
+}
 
-<div class="container mt-4" *ngIf="message">
-  <div class="card">
-    <div class="card-body">
-      <h3 class="card-title mb-3">Message Detail</h3>
-      <p><strong>Message ID:</strong> {{ message.messageId }}</p>
-      <p><strong>Timestamp:</strong> {{ message.timestamp | date: 'medium' }}</p>
-      <p><strong>Properties:</strong></p>
-      <pre class="details">{{ message.properties | json }}</pre>
+@if (message) {
+  <div class="container mt-4">
+    <div class="card">
+      <div class="card-body">
+        <h3 class="card-title mb-3">Message Detail</h3>
+        <p><strong>Message ID:</strong> {{ message.messageId }}</p>
+        <p><strong>Timestamp:</strong> {{ message.timestamp | date: 'medium' }}</p>
+        <p><strong>Properties:</strong></p>
+        <pre class="details">{{ message.properties | json }}</pre>
 
-      <p><strong>Payload:</strong></p>
-      <pre *ngIf="message.payload" class="payload">{{ message.payload | prettyPayload }}</pre>
-      <p *ngIf="!message.payload" class="text-muted fst-italic">No payload</p>
+        <p><strong>Payload:</strong></p>
+        @if (message.payload) {
+          <pre class="payload">{{ message.payload | prettyPayload }}</pre>
+        } @else {
+          <p class="text-muted fst-italic">No payload</p>
+        }
 
-      <div class="mt-4 d-flex gap-2">
-        <button
-          class="btn btn-success"
-          [disabled]="loading.resend"
-          (click)="showResendConfirm()"
-        >
-          <span *ngIf="loading.resend" class="spinner-border spinner-border-sm me-2"></span>
-          Resend
-        </button>
+        <div class="mt-4 d-flex gap-2">
+          <button
+            class="btn btn-success"
+            [disabled]="loading.resend"
+            (click)="showResendConfirm()"
+          >
+            @if (loading.resend) {
+              <span class="spinner-border spinner-border-sm me-2"></span>
+            }
+            Resend
+          </button>
 
-        <button
-          class="btn btn-danger"
-          [disabled]="loading.delete"
-          (click)="showDeleteConfirm()"
-        >
-          <span *ngIf="loading.delete" class="spinner-border spinner-border-sm me-2"></span>
-          Delete
-        </button>
+          <button
+            class="btn btn-danger"
+            [disabled]="loading.delete"
+            (click)="showDeleteConfirm()"
+          >
+            @if (loading.delete) {
+              <span class="spinner-border spinner-border-sm me-2"></span>
+            }
+            Delete
+          </button>
 
-        <button
-          class="btn btn-warning"
-          [disabled]="loading.dlq"
-          (click)="showDLQConfirm()"
-        >
-          <span *ngIf="loading.dlq" class="spinner-border spinner-border-sm me-2"></span>
-          Move to DLQ
-        </button>
+          <button
+            class="btn btn-warning"
+            [disabled]="loading.dlq"
+            (click)="showDLQConfirm()"
+          >
+            @if (loading.dlq) {
+              <span class="spinner-border spinner-border-sm me-2"></span>
+            }
+            Move to DLQ
+          </button>
 
-        <button class="btn btn-secondary ms-auto" (click)="goBack()">
-          ← Back to List
-        </button>
+          <button class="btn btn-secondary ms-auto" (click)="goBack()">
+            ← Back to List
+          </button>
+        </div>
       </div>
     </div>
   </div>
-</div>
+}
 
 <!-- Confirmation Modal -->
 <app-confirmation-modal
