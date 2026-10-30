@@ -1,4 +1,4 @@
-import {Component, Input, OnInit} from '@angular/core';
+import {Component, Input, OnInit, ChangeDetectionStrategy} from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MessageService } from '../../services/message.service';
 import { ToastService } from '../../services/toast.service';
@@ -15,6 +15,8 @@ import {JmsMessage} from "../../shared/models/jms-message.model";
   selector: 'app-message-detail',
   templateUrl: './message-detail.component.html',
   styleUrls: ['./message-detail.component.scss'],
+  changeDetection: ChangeDetectionStrategy.Eager,
+  standalone: false,
 })
 export class MessageDetailComponent implements OnInit {
   message: JmsMessage | null = null;

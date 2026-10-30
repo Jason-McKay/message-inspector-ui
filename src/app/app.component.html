@@ -1,10 +1,12 @@
 <nav class="navbar navbar-expand navbar-dark bg-dark mb-4">
   <div class="container-fluid">
     <a class="navbar-brand" routerLink="/">JMS Message Inspector</a>
-    <div class="d-flex align-items-center" *ngIf="isLoggedIn()">
-      <span class="navbar-text text-light me-3">Signed in as {{ username }}</span>
-      <button class="btn btn-sm btn-outline-light" (click)="logout()">Log out</button>
-    </div>
+    @if (isLoggedIn()) {
+      <div class="d-flex align-items-center">
+        <span class="navbar-text text-light me-3">Signed in as {{ username }}</span>
+        <button class="btn btn-sm btn-outline-light" (click)="logout()">Log out</button>
+      </div>
+    }
   </div>
 </nav>
 <router-outlet></router-outlet>

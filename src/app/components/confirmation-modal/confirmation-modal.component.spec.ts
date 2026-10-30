@@ -38,7 +38,7 @@ describe('ConfirmationModalComponent', () => {
     const confirmed = jasmine.createSpy('confirmed');
     const cancelled = jasmine.createSpy('cancelled');
     component.confirm.subscribe(confirmed);
-    component.cancel.subscribe(cancelled);
+    component.cancelled.subscribe(cancelled);
 
     const buttons: HTMLButtonElement[] =
       Array.from(fixture.nativeElement.querySelectorAll('button'));

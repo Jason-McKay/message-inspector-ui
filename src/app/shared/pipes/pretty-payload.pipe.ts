@@ -6,7 +6,7 @@ import { Pipe, PipeTransform } from '@angular/core';
  * JSON or XML but do not parse — is returned untouched. A pure pipe, so the parse
  * runs once per payload rather than on every change-detection cycle.
  */
-@Pipe({ name: 'prettyPayload' })
+@Pipe({ name: 'prettyPayload', standalone: false })
 export class PrettyPayloadPipe implements PipeTransform {
   transform(value: string | null | undefined): string {
     if (!value) return '';

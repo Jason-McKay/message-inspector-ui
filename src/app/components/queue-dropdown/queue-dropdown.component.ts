@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import {QueueService} from "../../services/queue.service";
 import {QueueSelectionService} from "../../services/queue-selection.service";
 import {ToastService} from "../../services/toast.service";
@@ -13,6 +13,8 @@ import {ToastService} from "../../services/toast.service";
 @Component({
   selector: 'app-queue-dropdown',
   templateUrl: './queue-dropdown.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
+  standalone: false,
 })
 export class QueueDropdownComponent implements OnInit {
   queues: string[] = [];

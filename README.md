@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/Jason-McKay/message-inspector-ui/actions/workflows/ci.yml/badge.svg)](https://github.com/Jason-McKay/message-inspector-ui/actions/workflows/ci.yml)
 
-An Angular 16 front end for inspecting **ActiveMQ Artemis JMS queues**: pick a queue, browse
+An Angular 22 front end for inspecting **ActiveMQ Artemis JMS queues**: pick a queue, browse
 its messages, view one (with pretty-printed JSON/XML payloads), and resend / delete / move
 it to a dead-letter queue. It talks to the
 [Spring Boot backend](https://github.com/Jason-McKay/message-inspector) on `:8080`.
@@ -41,14 +41,17 @@ flowchart TD
 
 ## Running it
 
-Needs the **backend running on `:8080`** (see its repo) and **Node 20.11.1** — Angular 16
-does not support the global Node 24, so pin it:
+Needs the **backend running on `:8080`** (see its repo) and **Node 24** — `.nvmrc` pins
+24.18.0, and Angular 22 accepts `^22.22.3 || ^24.15 || >=26`:
 
 ```bash
-nvm use 20.11.1     # nvm install 20.11.1 first if needed
+nvm use 24.18.0     # nvm install 24.18.0 first if needed
 npm install
 npm start           # ng serve on http://localhost:4200
 ```
+
+No backend to hand? `npm run mock` serves a stand-in on `:8080` with a control panel for
+forcing each failure mode — see [`mock-server/README.md`](mock-server/README.md).
 
 Log in with `jason`/`jason` (USER) or `admin`/`admin` (ADMIN — the only role that can delete
 or move to DLQ).
@@ -57,6 +60,7 @@ or move to DLQ).
 
 ```bash
 npx ng test --watch=false --browsers=ChromeHeadless
+npm run lint        # angular-eslint, src/**/*.ts and src/**/*.html
 ```
 
 The suite is behavioural, not smoke-only: it runs against jasmine-spied services (not
@@ -65,9 +69,13 @@ and HTTP-level failure. Destructive actions carry template-level specs that clic
 rendered button — a regression guard, because the bug they prevent (wiring a button straight
 to the service, bypassing the confirm modal) passes a spec that calls the handler directly.
 
-This exact command runs on every push/PR in CI
-([`.github/workflows/ci.yml`](.github/workflows/ci.yml)), on **Node 20.11.1** (pinned in
-`.nvmrc`; Angular 16 rejects Node 24) followed by a production `npm run build`.
+Lint is angular-eslint's recommended set with three rules turned off, each commented with
+why in [`eslint.config.js`](eslint.config.js): standalone components, OnPush and `inject()`
+would each be a refactor of the house style, not a lint fix.
+
+Both commands run on every push/PR in CI
+([`.github/workflows/ci.yml`](.github/workflows/ci.yml)), lint first, on **Node 24.18.0**
+(pinned in `.nvmrc`) followed by a production `npm run build`.
 
 ## Patterns worth knowing before you touch a service call
 

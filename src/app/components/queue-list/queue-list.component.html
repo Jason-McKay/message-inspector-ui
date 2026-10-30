@@ -2,28 +2,38 @@
   <h2>Queues</h2>
 
   <section>
-    <div *ngIf="loading" class="text-muted my-2">
-      <span class="spinner-border spinner-border-sm me-2" role="status"></span>Loading queues…
-    </div>
-    <div *ngIf="error" class="alert alert-danger">{{ error }}</div>
-    <div *ngIf="!loading && !error && queueNamesJolokia.length === 0" class="alert alert-info">
-      No queues found.
-    </div>
-    <div class="card" *ngIf="!loading && queueNamesJolokia.length">
-      <div class="table-responsive">
-        <table class="table table-striped mb-0">
-          <thead>
-          <tr>
-            <th>Queue Name</th>
-          </tr>
-          </thead>
-          <tbody>
-          <tr *ngFor="let queue of queueNamesJolokia">
-            <td>{{ queue }}</td>
-          </tr>
-          </tbody>
-        </table>
+    @if (loading) {
+      <div class="text-muted my-2">
+        <span class="spinner-border spinner-border-sm me-2" role="status"></span>Loading queues…
       </div>
-    </div>
+    }
+    @if (error) {
+      <div class="alert alert-danger">{{ error }}</div>
+    }
+    @if (!loading && !error && queueNamesJolokia.length === 0) {
+      <div class="alert alert-info">
+        No queues found.
+      </div>
+    }
+    @if (!loading && queueNamesJolokia.length) {
+      <div class="card">
+        <div class="table-responsive">
+          <table class="table table-striped mb-0">
+            <thead>
+            <tr>
+              <th>Queue Name</th>
+            </tr>
+            </thead>
+            <tbody>
+            @for (queue of queueNamesJolokia; track queue) {
+              <tr>
+                <td>{{ queue }}</td>
+              </tr>
+            }
+            </tbody>
+          </table>
+        </div>
+      </div>
+    }
   </section>
 </div>

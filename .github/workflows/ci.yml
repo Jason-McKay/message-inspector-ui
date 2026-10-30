@@ -10,18 +10,21 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      # Node 20.11.1 is pinned (see .nvmrc): Angular 16 rejects Node 24. ubuntu-latest
+      # Node 24.18.0 is pinned (see .nvmrc): Angular 20+ rejects the old 20.11.1 pin. ubuntu-latest
       # ships Google Chrome, which karma-chrome-launcher uses for the ChromeHeadless run.
       - name: Set up Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version-file: .nvmrc
           cache: npm
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Lint
+        run: npm run lint
 
       - name: Test (headless)
         run: npx ng test --watch=false --browsers=ChromeHeadless

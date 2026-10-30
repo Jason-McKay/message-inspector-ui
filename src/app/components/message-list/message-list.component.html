@@ -27,52 +27,62 @@
     </div>
   </div>
 
-  <div *ngIf="isLoading" class="text-center my-4">
-    <div class="spinner-border text-primary" role="status">
-      <span class="visually-hidden">Loading messages…</span>
+  @if (isLoading) {
+    <div class="text-center my-4">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Loading messages…</span>
+      </div>
     </div>
-  </div>
+  }
 
-  <div *ngIf="!isLoading && loadError" class="alert alert-danger">
-    {{ loadError }}
-  </div>
+  @if (!isLoading && loadError) {
+    <div class="alert alert-danger">
+      {{ loadError }}
+    </div>
+  }
 
-  <div *ngIf="!isLoading && !loadError && hasFetched && messages.length === 0" class="alert alert-info">
-    No messages found in <strong>{{ queueName }}</strong>.
-  </div>
+  @if (!isLoading && !loadError && hasFetched && messages.length === 0) {
+    <div class="alert alert-info">
+      No messages found in <strong>{{ queueName }}</strong>.
+    </div>
+  }
 
   <!-- The card is the surface the table sits on, so the table drops its own border and its
        trailing margin -- two frames and a gap under the last row otherwise. -->
-  <div class="card" *ngIf="!isLoading && messages.length > 0">
-    <div class="table-responsive">
-      <table class="table table-striped mb-0">
-        <thead>
-        <tr>
-          <th>Message ID</th>
-          <th>Timestamp</th>
-          <th>Action</th>
-        </tr>
-        </thead>
-        <tbody>
-        <tr *ngFor="let msg of messages">
-          <td>{{ msg.messageId }}</td>
-          <td>{{ msg.timestamp | date: 'short' }}</td>
-          <td>
-            <button class="btn btn-sm btn-outline-primary me-1" (click)="viewMessage(msg.messageId)">
-              View
-            </button>
-            <button class="btn btn-sm btn-outline-danger me-1" (click)="showDeleteConfirm(msg.messageId)">
-              Delete
-            </button>
-            <button class="btn btn-sm btn-outline-warning" (click)="showDLQConfirm(msg.messageId)">
-              Move to DLQ
-            </button>
-          </td>
-        </tr>
-        </tbody>
-      </table>
+  @if (!isLoading && messages.length > 0) {
+    <div class="card">
+      <div class="table-responsive">
+        <table class="table table-striped mb-0">
+          <thead>
+          <tr>
+            <th>Message ID</th>
+            <th>Timestamp</th>
+            <th>Action</th>
+          </tr>
+          </thead>
+          <tbody>
+          @for (msg of messages; track msg) {
+            <tr>
+              <td>{{ msg.messageId }}</td>
+              <td>{{ msg.timestamp | date: 'short' }}</td>
+              <td>
+                <button class="btn btn-sm btn-outline-primary me-1" (click)="viewMessage(msg.messageId)">
+                  View
+                </button>
+                <button class="btn btn-sm btn-outline-danger me-1" (click)="showDeleteConfirm(msg.messageId)">
+                  Delete
+                </button>
+                <button class="btn btn-sm btn-outline-warning" (click)="showDLQConfirm(msg.messageId)">
+                  Move to DLQ
+                </button>
+              </td>
+            </tr>
+          }
+          </tbody>
+        </table>
+      </div>
     </div>
-  </div>
+  }
 </div>
 
 <!-- Confirmation Modal -->
@@ -80,5 +90,5 @@
   [visible]="confirm.visible"
   [actionLabel]="confirm.action"
   (confirm)="confirm.handler?.()"
-  (cancel)="confirm.visible = false">
+  (cancelled)="confirm.visible = false">
 </app-confirmation-modal>

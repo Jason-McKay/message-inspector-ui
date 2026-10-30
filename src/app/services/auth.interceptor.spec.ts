@@ -1,7 +1,8 @@
 import { TestBed } from '@angular/core/testing';
-import { HTTP_INTERCEPTORS, HttpClient } from '@angular/common/http';
-import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { HTTP_INTERCEPTORS, HttpClient, provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { Router } from '@angular/router';
+import { noop } from 'rxjs';
 
 import { AuthInterceptor } from './auth.interceptor';
 import { AuthService } from './auth.service';
@@ -20,11 +21,12 @@ describe('AuthInterceptor', () => {
     auth = { token: 'jwt-abc', logout: jasmine.createSpy('logout') };
 
     TestBed.configureTestingModule({
-      imports: [HttpClientTestingModule],
       providers: [
         { provide: AuthService, useValue: auth },
         { provide: Router, useValue: router },
         { provide: HTTP_INTERCEPTORS, useClass: AuthInterceptor, multi: true },
+        provideHttpClient(withInterceptorsFromDi()),
+        provideHttpClientTesting(),
       ],
     });
     http = TestBed.inject(HttpClient);
@@ -59,7 +61,7 @@ describe('AuthInterceptor', () => {
   });
 
   it('logs out and redirects to /login on a 401', () => {
-    http.get(API_CALL).subscribe({ error: () => {} });
+    http.get(API_CALL).subscribe({ error: noop });
 
     httpMock.expectOne(API_CALL).flush({}, { status: 401, statusText: 'Unauthorized' });
 
@@ -69,7 +71,7 @@ describe('AuthInterceptor', () => {
 
   // A 401 from login is "wrong password", not an expired session — it must not bounce.
   it('does not redirect on a 401 from the login call itself', () => {
-    http.post(LOGIN_CALL, {}).subscribe({ error: () => {} });
+    http.post(LOGIN_CALL, {}).subscribe({ error: noop });
 
     httpMock.expectOne(LOGIN_CALL).flush({}, { status: 401, statusText: 'Unauthorized' });
 
