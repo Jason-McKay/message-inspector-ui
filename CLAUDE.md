@@ -11,20 +11,25 @@ block over any phase numbering left behind in code comments.
 
 ## Commands
 
-Angular CLI 16 project (`ng` via `npx ng` or the npm scripts):
+Angular CLI 22 project on **Node 24** (`ng` via `npx ng` or the npm scripts):
 
 - `npm start` — dev server on http://localhost:4200 (`ng serve`, development config)
-- `npm run build` — production build to `dist/message-inspector-ui`
+- `npm run build` — production build to `dist/message-inspector-ui/browser/` (the esbuild
+  `@angular/build:application` builder's layout — not `dist/message-inspector-ui` itself)
 - `npm run watch` — incremental development build
 - `npm test` — Karma + Jasmine in a launched Chrome, watch mode
+- `npm run lint` — angular-eslint over `src/**/*.ts` and `src/**/*.html`
 - `npm run mock` — the mock backend on :8080 in place of the real Spring/Artemis stack
 
-Running a subset of tests: there is no `karma.conf.js` (the CLI karma builder generates the
-config), so use Jasmine focus instead — change `describe`/`it` to `fdescribe`/`fit` in the spec,
-or filter in the Karma browser UI. For a single non-watch run:
-`npx ng test --watch=false --browsers=ChromeHeadless`.
+Running a subset of tests: there is no `karma.conf.js` (the `@angular/build:karma` builder
+generates the config), so pass `--include src/app/path/to/file.spec.ts` to `ng test`, or use
+Jasmine focus — change `describe`/`it` to `fdescribe`/`fit` in the spec, or filter in the Karma
+browser UI. For a single non-watch run: `npx ng test --watch=false --browsers=ChromeHeadless`.
 
-There is no linter configured and no e2e setup.
+**Lint** is angular-eslint's recommended set (`eslint.config.js`, flat config) with three rules
+turned off, each commented with why: `prefer-standalone` (NgModule by design),
+`prefer-on-push-component-change-detection` (Eager on purpose, see Architecture) and
+`prefer-inject` (constructor injection is the house style). There is no e2e setup.
 
 **Mock backend** (`mock-server/`, its own README): a zero-dependency `node:http` stand-in for
 the Spring/Artemis stack, so the UI runs with no Docker, broker or JVM. `npm run mock` serves
@@ -33,16 +38,30 @@ failure modes — the 200-with-`success:false` envelope, the bodyless 401 and 40
 — none of which are otherwise reachable without breaking a real broker. It is hand-written
 against the backend, so **the backend is the authority whenever the two disagree**.
 
-**CI** (`.github/workflows/ci.yml`, Phase 7): on push/PR to `master`, `npm ci` → the
-headless test command above → `npm run build`. Node is pinned to **20.11.1** via `.nvmrc`
-(Angular 16 rejects Node 24), read by the workflow through `node-version-file`. ubuntu-latest
+**CI** (`.github/workflows/ci.yml`, Phase 7): on push/PR to `master`, `npm ci` →
+`npm run lint` → the headless test command above → `npm run build`. Node is pinned to
+**24.18.0** via `.nvmrc` (Angular 20+ rejects the old 20.11.1 pin; Angular 22 accepts
+`^22.22.3 || ^24.15 || >=26`), read by the workflow through `node-version-file`. ubuntu-latest
 ships Google Chrome for the ChromeHeadless run.
 
 ## Architecture
 
-Angular 16 **NgModule** app (not standalone components) — everything is declared in
-`src/app/app.module.ts`. Frontend only; it talks to a separate Spring/JMS backend expected at
+Angular 22 **NgModule** app (not standalone components) — everything is declared in
+`src/app/app.module.ts`, and every declaration carries `standalone: false` (standalone is the
+default since Angular 19). Frontend only; it talks to a separate Spring/JMS backend expected at
 `http://localhost:8080`.
+
+**Change detection is zone-based and Eager, deliberately.** `main.ts` bootstraps through
+`platformBrowser()` with `provideZoneChangeDetection()`, and zone.js is still loaded. Every
+component declares `changeDetection: ChangeDetectionStrategy.Eager` because Angular 22 made
+OnPush the default; Eager is the pre-22 behaviour this code is written for — fields assigned in
+`subscribe` callbacks, which OnPush would not re-render. Give a new component the same two
+settings (`ng generate` emits a standalone OnPush component). Templates use the built-in
+control flow (`@if` / `@for`), not `*ngIf` / `*ngFor`.
+
+**HTTP** is `provideHttpClient(withXhr(), withInterceptorsFromDi())` in `AppModule`.
+`withInterceptorsFromDi()` is what keeps the class-based `AuthInterceptor` in the chain;
+`withXhr()` keeps the XMLHttpRequest backend Angular 22 replaced with `fetch` as the default.
 
 **Domain:** a browser UI for inspecting ActiveMQ Artemis JMS queues — list queues, list messages
 on a queue, view a message, and resend / delete / move-to-DLQ it.
@@ -109,7 +128,7 @@ Destructive actions there go through `showDeleteConfirm()` / `showDLQConfirm()`,
 straight to `onDeleteConfirmed()` / `onDLQConfirmed()` — a spec guards this, because the
 template previously called the latter and the modal never opened. `MessageListComponent` carries
 the same confirm shape for its per-row actions, and mounts `<app-queue-dropdown>`
-(`message-list.component.html:12`) — that mounting is what gives `QueueSelectionService` a
+(`message-list.component.html:14`) — that mounting is what gives `QueueSelectionService` a
 writer. The list also still accepts a queue typed into its text box.
 
 **Shared** — `shared/models/` holds `JmsMessage` and `ApiResponse`.
@@ -124,7 +143,10 @@ prebuilt CSS, so `src/styles/_tokens.scss` can override its `!default` variables
 used. The import order there is load-bearing: `bootstrap/scss/functions`, then the tokens, then
 `bootstrap/scss/bootstrap`. The bare `bootstrap/...` paths resolve through
 `stylePreprocessorOptions.includePaths` in `angular.json` — set on the **build and test builders
-both**, or the suite fails to compile while the app builds fine. Per-component SCSS on top of that.
+both**, or the suite fails to compile while the app builds fine. The same block carries
+`sass.silenceDeprecations: ["import"]` on both builders: Bootstrap 5.3 is consumed through
+`@import`, which Dart Sass deprecates, and it has no `@use` API to migrate to. Per-component SCSS
+on top of that.
 Angular Material is gone entirely, dependency included — all UI is Bootstrap markup. TypeScript is
 in `strict` mode with `strictTemplates`.
 
@@ -161,6 +183,23 @@ in `strict` mode with `strictTemplates`.
   Each has a template-level spec that clicks the rendered button — a spec calling
   `showDeleteConfirm()` directly passes just as happily when the button is rewired straight to
   `deleteMessage()`, which is how the bug existed in both templates.
+- **The modal's outputs are `confirm` and `cancelled`** (`cancel` until the Angular 22 upgrade;
+  it shadowed the DOM `cancel` event). A binding to an output the child does not declare still
+  compiles — Angular binds it as a native DOM listener — so a stale `(cancel)` leaves Cancel dead
+  with no error. Each view has a spec that clicks the rendered modal's Cancel for this reason.
+- **ngx-toastr is held on Angular 22 by an npm `overrides` entry in `package.json`.** 19.x no
+  longer builds on 22 (it injects `ComponentFactoryResolver`, which 22 no longer exports), and
+  20.0.5 — the newest release — declares peers `@angular/common|core ^21`, so `npm install` fails
+  ERESOLVE without the override re-pointing them at the root versions. Drop it once ngx-toastr
+  declares 22. `@angular/animations` is gone too: ngx-toastr 20 animates without it, so do not
+  re-add `BrowserAnimationsModule`.
+- **The Jasmine that runs is karma-jasmine's, not the root `jasmine-core`.** karma-jasmine 5.1.0
+  (the final release; Karma is deprecated) depends on `jasmine-core ^4.1.0` and resolves it from
+  its own directory, so the root `jasmine-core` / `@types/jasmine` are held on 4.6 to match it —
+  the root copy only feeds the HTML reporter. Forcing Jasmine 5+ with an override fails the run:
+  it reports the router's internal `NoMatch` rejections (caught by the router, invisible in the
+  app) as unhandled, and 6 adds unsupported-configuration warnings from zone.js's Jasmine patch.
+  Vitest is the way forward, not a newer Jasmine under Karma.
 - **Pass route params to `Router.navigate` raw.** The Router encodes path segments,
   `ActivatedRoute` decodes them, and `MessageService` encodes for the HTTP call — one encode per
   boundary. Pre-encoding in `viewMessage()` produced `%253A`, which **Tomcat rejects with a 400
