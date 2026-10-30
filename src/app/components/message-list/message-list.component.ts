@@ -1,5 +1,5 @@
-import {Component, OnInit} from '@angular/core';
-import { MessageService } from 'src/app/services/message.service';
+import {Component, OnInit, ChangeDetectionStrategy} from '@angular/core';
+import { MessageService } from '../../services/message.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import {ToastService} from "../../services/toast.service";
 import {QueueSelectionService} from "../../services/queue-selection.service";
@@ -16,6 +16,7 @@ import {JmsMessage} from "../../shared/models/jms-message.model";
   selector: 'app-message-list',
   templateUrl: './message-list.component.html',
   styleUrls: ['./message-list.component.scss'],
+  changeDetection: ChangeDetectionStrategy.Eager,
   standalone: false,
 })
 export class MessageListComponent implements OnInit{

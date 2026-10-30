@@ -1,4 +1,4 @@
-import {Component, OnInit} from '@angular/core';
+import {Component, OnInit, ChangeDetectionStrategy} from '@angular/core';
 import {QueueService} from "../../services/queue.service";
 import {ToastService} from "../../services/toast.service";
 
@@ -12,6 +12,7 @@ import {ToastService} from "../../services/toast.service";
   selector: 'app-queue-list',
   templateUrl: './queue-list.component.html',
   styleUrls: ['./queue-list.component.scss'],
+  changeDetection: ChangeDetectionStrategy.Eager,
   standalone: false
 })
 export class QueueListComponent implements OnInit {

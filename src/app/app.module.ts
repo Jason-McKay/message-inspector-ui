@@ -1,6 +1,6 @@
 import { NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
-import { HTTP_INTERCEPTORS, provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
+import { HTTP_INTERCEPTORS, provideHttpClient, withInterceptorsFromDi, withXhr } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { ToastrModule } from 'ngx-toastr';
@@ -35,8 +35,9 @@ import { PrettyPayloadPipe } from './shared/pipes/pretty-payload.pipe';
     ToastrModule.forRoot(),
   ],
   providers: [
+    // withXhr() keeps the XMLHttpRequest backend Angular 22 replaced with fetch as the default.
     // withInterceptorsFromDi() is what keeps the class-based HTTP_INTERCEPTORS entry below in the chain.
-    provideHttpClient(withInterceptorsFromDi()),
+    provideHttpClient(withXhr(), withInterceptorsFromDi()),
     // Attaches the bearer token to backend calls and bounces a 401 to /login.
     { provide: HTTP_INTERCEPTORS, useClass: AuthInterceptor, multi: true }
   ],
